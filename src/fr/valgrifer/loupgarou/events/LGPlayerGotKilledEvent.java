@@ -6,17 +6,19 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class LGPlayerGotKilledEvent extends LGEvent {
-	public LGPlayerGotKilledEvent(LGGame game, LGPlayer killed, LGPlayerKilledEvent.Reason reason, boolean endGame) {
-		super(game);
-		this.killed = killed;
-		this.reason = reason;
-		this.endGame = endGame;
-	}
-	
-	@Getter private final boolean endGame;
-    @Getter private final LGPlayer killed;
+    @Getter
+    private final boolean endGame;
+    @Getter
+    private final LGPlayer killed;
     @Getter
     private final LGPlayerKilledEvent.Reason reason;
-    @Getter @Setter
+    @Getter
+    @Setter
     private boolean hideMessage = false;
+    public LGPlayerGotKilledEvent(LGGame game, LGPlayer killed, LGPlayerKilledEvent.Reason reason, boolean endGame) {
+        super(game);
+        this.killed = killed;
+        this.reason = reason;
+        this.endGame = endGame;
+    }
 }

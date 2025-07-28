@@ -5,10 +5,12 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.event.Cancellable;
 
-public class LGPreNightEndEvent extends LGEvent implements Cancellable{
-	public LGPreNightEndEvent(LGGame game) {
-		super(game);
-	}
-	
-	@Getter @Setter private boolean cancelled;
+public class LGPreNightEndEvent extends LGEvent implements Cancellable {
+    @Getter
+    @Setter
+    private boolean cancelled;
+
+    public LGPreNightEndEvent(LGGame game) {
+        super(game);
+    }
 }

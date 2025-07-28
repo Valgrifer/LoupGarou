@@ -4,12 +4,13 @@ import net.minecraft.server.v1_16_R3.NBTTagList;
 
 import java.util.Collection;
 
-public class NBTList implements fr.valgrifer.loupgarou.utils.nms.nbt.NBTList
-{
+public class NBTList implements fr.valgrifer.loupgarou.utils.nms.nbt.NBTList {
     private final NBTTagList handler;
+
     public NBTList(NBTTagList tag) {
         handler = tag;
     }
+
     public NBTList() {
         handler = new NBTTagList();
     }

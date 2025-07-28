@@ -4,8 +4,7 @@ import fr.valgrifer.loupgarou.classes.LGPlayer;
 import lombok.Getter;
 import org.bukkit.event.inventory.InventoryType;
 
-public class LGPrivateInventoryHolder extends LGInventoryHolder
-{
+public class LGPrivateInventoryHolder extends LGInventoryHolder {
     @Getter
     private final LGPlayer player;
 
@@ -14,6 +13,7 @@ public class LGPrivateInventoryHolder extends LGInventoryHolder
 
         this.player = player;
     }
+
     public LGPrivateInventoryHolder(InventoryType type, String title, LGPlayer player) {
         super(type, title);
 

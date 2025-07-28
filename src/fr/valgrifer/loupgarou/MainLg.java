@@ -16,7 +16,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.simple.JSONArray;
@@ -29,14 +28,15 @@ import java.util.*;
 import static fr.valgrifer.loupgarou.utils.ChatColorQuick.*;
 
 public class MainLg extends JavaPlugin {
+    @Getter
     private static MainLg instance;
+    @Getter
+    private static int maxPlayers = 0;
+    private final List<Class<? extends Role>> blacklistRoleSpec = new ArrayList<>();
     @Getter
     private List<Class<? extends Role>> roles = new ArrayList<>();
     @Getter
     private List<Class<? extends Role>> notSelectableRoles = new ArrayList<>();
-    @Getter
-    private static int maxPlayers = 0;
-
     @Getter
     @Setter
     private LGGame currentGame;//Because for now, only one game will be playable on one server (flemme)
@@ -46,10 +46,6 @@ public class MainLg extends JavaPlugin {
         MainLg.getInstance().setCurrentGame(game);
     }
 
-    public static MainLg getInstance() {
-        return instance;
-    }
-
     @Override
     public void onLoad() {
         instance = this;
@@ -57,7 +53,7 @@ public class MainLg extends JavaPlugin {
         if (!new File(getDataFolder(), "config.yml").exists()) {//Créer la config
             saveDefaultConfig();
             FileConfiguration config = getConfig();
-            config.set("spawns", new ArrayList<List<Double>>());
+            config.set("spawns", new ArrayList<>());
             for (Class<? extends Role> role : roles)//Nombre de participants pour chaque rôle
                 config.set("role." + Role.getId(role), 0);
             saveConfig();
@@ -76,7 +72,7 @@ public class MainLg extends JavaPlugin {
 
         LGCardItems.registerResources(this);
 
-        if(getConfig().getBoolean("resourcepack.generateResourcePack", false))
+        if (getConfig().getBoolean("resourcepack.generateResourcePack", false))
             ResourcePack.generate(this, getConfig().getString("resourcepack.path", "./resourcepack/loup_garou.zip"));
 
         getLogger().info("ResourcePack Url Used: " + VariousUtils.resourcePackAddress(this));
@@ -93,19 +89,18 @@ public class MainLg extends JavaPlugin {
         pm.registerEvents(new LoveListener(), this);
 
         for (Player player : Bukkit.getOnlinePlayers())
-            Bukkit.getPluginManager().callEvent(new PlayerJoinEvent(player, "is connected"));
+            JoinListener.addPlayer(player, false);
 
-        if (pm.getPlugin("ProtocolLib") != null)
-            ProtocolLibHook.hook(this);
-        else
-            pm.disablePlugin(this);
+        if (pm.getPlugin("ProtocolLib") != null) ProtocolLibHook.hook(this);
+        else pm.disablePlugin(this);
     }
 
     @Override
     public void onDisable() {
-        if (Bukkit.getPluginManager().getPlugin("ProtocolLib") != null)
-            ProtocolLibrary.getProtocolManager().removePacketListeners(this);
+        if (Bukkit.getPluginManager().getPlugin("ProtocolLib") != null) ProtocolLibrary.getProtocolManager().removePacketListeners(this);
     }
+
+    private Location centerLocation;
 
     @SuppressWarnings("NullableProblems")
     @Override
@@ -115,20 +110,40 @@ public class MainLg extends JavaPlugin {
                 sender.sendMessage(DARK_RED + "Erreur: Vous n'avez pas la permission...");
                 return true;
             }
-            if(!(sender instanceof Player))
-            {
+            if (!(sender instanceof Player)) {
                 sender.sendMessage("Erreur: Vous n'êtes pas un joueur");
                 return true;
             }
+            if (args.length >= 1 && args[0].equalsIgnoreCase("center")) {
+                Player player = (Player) sender;
+                this.centerLocation = player.getLocation();
+                sender.sendMessage(GREEN + "Le centre a bien été pris en compte !");
+                return true;
+            }
             if (args.length >= 1 && args[0].equalsIgnoreCase("addspawn")) {
+                if (this.centerLocation == null) {
+                    sender.sendMessage(RED + "Le centre n'a pas étais définie !");
+                    return true;
+                }
+
                 Player player = (Player) sender;
                 Location loc = player.getLocation();
-                List<Object> list = (List<Object>) getConfig().getList("spawns");
-                assert list != null;
-                list.add(Arrays.asList((double) loc.getBlockX(), loc.getY(), (double) loc.getBlockZ(), (double) loc.getYaw(), (double) loc.getPitch()));
+                List<Object> list = (List<Object>) getConfig().getList("spawns", new ArrayList<>());
+
+                double deltaZ = this.centerLocation.getBlockZ() - loc.getBlockZ();
+                double deltaX = this.centerLocation.getBlockX() - loc.getBlockX();
+                double angleRadian = Math.atan2(deltaZ, deltaX);
+                double angleDegres = Math.toDegrees(angleRadian) - 90;
+
+                if (angleDegres < -180)
+                    angleDegres += 360;
+
+                list.add(
+                    Arrays.asList((double) loc.getBlockX(), loc.getY(), (double) loc.getBlockZ(), angleDegres, 15D));
+                getConfig().set("spawns", list);
                 saveConfig();
-                loadMaxPlayers();
-                sender.sendMessage(GREEN + "La position a bien été ajoutée !");
+
+                sender.sendMessage(String.format(GREEN + "La position a bien été ajoutée ! (%s, %s, %s; %s; %s)", loc.getBlockX(), loc.getY(), loc.getBlockZ(), angleDegres, 15D));
                 return true;
             }
             if (args.length >= 1 && args[0].equalsIgnoreCase("debug")) {
@@ -139,53 +154,38 @@ public class MainLg extends JavaPlugin {
             return true;
         }
         else if (command.getName().equalsIgnoreCase("spec")) {
-            if(!(sender instanceof Player))
-            {
+            if (!(sender instanceof Player)) {
                 sender.sendMessage(DARK_RED + "Erreur: " + RED + "Vous n'êtes pas un joueur");
                 return true;
             }
-            LGPlayer lgp = LGPlayer.thePlayer((Player) sender);
+            LGPlayer lgp = LGPlayer.get((Player) sender);
 
-            if(lgp.getGame() == null)
-                return true;
+            if (lgp.getGame() == null) return true;
 
-            @SuppressWarnings("ConstantValue") boolean canOpen = !lgp.getGame().isStarted() || lgp.getGame().isStarted() && lgp.isDead();
+            @SuppressWarnings("ConstantValue") boolean canOpen = (!lgp.getGame().isStarted() || lgp.getGame().isStarted() && lgp.isDead()) &&
+                lgp.getGame().getRoles().stream().noneMatch(rl -> blacklistRoleSpec.contains(rl.getClass()));
 
-            for (Role rl : lgp.getGame().getRoles())
-                if(blacklistRoleSpec.contains(rl.getClass()))
-                {
-                    canOpen = false;
-                    break;
-                }
-
-            if(canOpen)
-                ((Player) sender).openInventory(SpecManager.getMainSpecManager().getInventory());
-            else
-                lgp.sendMessage(DARK_RED + "Erreur: " + RED + "La Commande vous à étais bloqué");
+            if (canOpen) ((Player) sender).openInventory(SpecManager.getMainSpecManager().getInventory());
+            else lgp.sendMessage(DARK_RED + "Erreur: " + RED + "La Commande vous à étais bloqué");
             return true;
         }
         return false;
     }
-    private final List<Class<? extends Role>> blacklistRoleSpec = new ArrayList<>();
 
     @SuppressWarnings("NullableProblems")
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (command.getName().equalsIgnoreCase("lg") &&
-                sender.hasPermission("loupgarou.admin") &&
-                args.length == 1)
-            return getStartingList(args[0], "addSpawn");
+        if (command.getName().equalsIgnoreCase("lg") && sender.hasPermission("loupgarou.admin") && args.length == 1)
+            return getStartingList(args[0], "addSpawn", "center");
         return new ArrayList<>(0);
     }
 
     private List<String> getStartingList(String startsWith, String... list) {
         startsWith = startsWith.toLowerCase();
         List<String> returnlist = new ArrayList<>();
-        if (startsWith.length() == 0)
-            return Arrays.asList(list);
+        if (startsWith.isEmpty()) return Arrays.asList(list);
         for (String s : list)
-            if (s.toLowerCase().startsWith(startsWith))
-                returnlist.add(s);
+            if (s.toLowerCase().startsWith(startsWith)) returnlist.add(s);
         return returnlist;
     }
 
@@ -199,17 +199,16 @@ public class MainLg extends JavaPlugin {
     public void addRole(Class<? extends Role> clazz, InputStream image) {
         addRole(clazz, image, true);
     }
+
     public void addRole(Class<? extends Role> clazz, InputStream image, boolean selectable) {
         String id = Role.getId(clazz);
         LGCardItems.registerCardTexture(id, image);
         this.roles.add(clazz);
-        if(!selectable)
-            this.notSelectableRoles.add(clazz);
+        if (!selectable) this.notSelectableRoles.add(clazz);
     }
 
     public void addBlackListSpecRole(Class<? extends Role> clazz) {
-        if(!this.blacklistRoleSpec.contains(clazz))
-            this.blacklistRoleSpec.add(clazz);
+        if (!this.blacklistRoleSpec.contains(clazz)) this.blacklistRoleSpec.add(clazz);
     }
 
     @SuppressWarnings("SpellCheckingInspection")
@@ -253,7 +252,9 @@ public class MainLg extends JavaPlugin {
             addRole(RBearShowman.class, getResource("roles/bearshowman.png"));
             addRole(RVampire.class, getResource("roles/vampire.png"));
             addRole(RVampireHunter.class, getResource("roles/vampirehunter.png"));
-            addRole(RPsychopath.class, getResource("roles/psychopath.png"));
+            addRole(RPsychopath.class, getResource("roles/kira.png"));
+            addRole(RWolfFelt.class, getResource("roles/feltwerewolf.png"));
+            addRole(RFox.class, getResource("roles/fox.png"));
 
             addBlackListSpecRole(RMedium.class);
             addBlackListSpecRole(RPriest.class);
@@ -262,14 +263,13 @@ public class MainLg extends JavaPlugin {
         }
     }
 
-    public InputStream getResource(@NonNull String path)
-    {
+    public InputStream getResource(@NonNull String path) {
         return this.getClassLoader().getResourceAsStream("assets/" + path);
     }
 
     private void registerResources() {
-        Arrays.asList("entity/steve.png", "entity/alex.png", "misc/pumpkinblur.png").forEach(o ->
-                ResourcePack.addFile("assets/minecraft/textures/" + o, getResource(o), true));
+        Arrays.asList("entity/steve.png", "entity/alex.png", "misc/pumpkinblur.png")
+            .forEach(o -> ResourcePack.addFile("assets/minecraft/textures/" + o, getResource(o), true));
 
         Map<String, Material> newItem = new HashMap<>();
         newItem.put("ui_selector", Material.EMERALD);
@@ -279,17 +279,12 @@ public class MainLg extends JavaPlugin {
         newItem.put("ui_potion_death", Material.LIGHT_BLUE_DYE);
         newItem.put("ui_heart", Material.SUGAR);
 
-        newItem.forEach((id, mat) -> ResourcePack.addItem(ItemBuilder
-                        .make(mat)
-                        .setCustomId(id),
-                getResource(String.format("item/%s.png", id))));
+        newItem.forEach((id, mat) -> ResourcePack.addItem(ItemBuilder.make(mat).setCustomId(id), getResource(String.format("item/%s.png", id))));
 
         JSONObject soundsJS = new JSONObject();
 
-        for(LGSound sound : LGSound.getValues())
-        {
-            if(!sound.isResourcePack())
-                continue;
+        for (LGSound sound : LGSound.getValues()) {
+            if (!sound.isResourcePack()) continue;
 
             JSONObject soundJS = new JSONObject();
             soundJS.put("category", sound.getCategory().name().toLowerCase());

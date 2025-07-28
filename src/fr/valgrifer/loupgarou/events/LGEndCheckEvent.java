@@ -7,18 +7,19 @@ import lombok.Getter;
 
 import java.util.Map;
 
-public class LGEndCheckEvent extends LGEvent{
-	public LGEndCheckEvent(LGGame game, LGWinType winType, Map<RoleWinType, Integer> roleWinTypeAlive) {
-		super(game);
-        this.winType = winType;
-		this.roleWinTypeAlive = roleWinTypeAlive;
-	}
+public class LGEndCheckEvent extends LGEvent {
+    @Getter
+    private final Map<RoleWinType, Integer> roleWinTypeAlive;
+    @Getter
+    private LGWinType winType;
 
-    public void setWinType(LGWinType winType)
-    {
-        this.winType = winType == null ? LGWinType.NONE : winType;
+    public LGEndCheckEvent(LGGame game, LGWinType winType, Map<RoleWinType, Integer> roleWinTypeAlive) {
+        super(game);
+        this.winType = winType;
+        this.roleWinTypeAlive = roleWinTypeAlive;
     }
 
-	@Getter private LGWinType winType;
-	@Getter private final Map<RoleWinType, Integer> roleWinTypeAlive;
+    public void setWinType(LGWinType winType) {
+        this.winType = winType == null ? LGWinType.NONE : winType;
+    }
 }

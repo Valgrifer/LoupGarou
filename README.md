@@ -85,7 +85,7 @@ Les fichiers relatifs à minecraft se situeront dans le dossier `minecraft_data`
 
 ## Todo
 
-- [ ] Add Identifier for LGChat add a Event / Ajouter un authentifier pour LGChat et lui ajouter un event
+- [x] Add Identifier for LGChat add a Event / Ajouter un authentifier pour LGChat et lui ajouter un event
 - [x] Change to a Better system Item Card / Changement pour un meilleure system item de carte
 - [x] Add a resource pack generator / Ajouter un géneréteur de Resource Pack
 - [x] Add RoleActionEvent with Identifier / Ajouter un event RoleAction avec un authentifier
@@ -102,6 +102,10 @@ Les fichiers relatifs à minecraft se situeront dans le dossier `minecraft_data`
 - Chef de Projet : [Shytoos](https://twitter.com/Shytoos)
 - Développement : [Leomelki](https://twitter.com/leomelki)
 - Mapping : [Cosii](https://www.youtube.com/channel/UCwyOcA41QSk590fl9L0ys8A)
+- 
+## Crédits du projet maintenant
+
+- Développement : [Valgrifer](https://github.com/Valgrifer)
 
 ## Aide
 
@@ -151,9 +155,11 @@ Merci de garder cela en tête lors du développement de nouveaux rôles : utilis
 
 #### Quelques classes utiles
 `LGGame` : Contient le coeur du jeu, à modifier le minimum possible !  
+`LGSpot` : Outils des emplacements des joueurs relative aux d'autres.  
 `LGPlayer` : Classe utilisée pour intéragir avec les joueurs et stocker leurs données, à modifier le minimum possible !  
 `LGVote` : Système gérant les votes.  
-`RoleSort`: Classement de l'apparition des rôles durant la nuit. 
+`RoleSort`: Classement de l'apparition des rôles durant la nuit.   
+`ResourcePack`: Outils relatif au ResourcePack custom. 
 
 ### Publier un rôle
 

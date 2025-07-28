@@ -24,3 +24,4 @@ hs_err_pid*
 # Minecraft data
 /minecraft_data
 /build/
+/.idea/discord.xml

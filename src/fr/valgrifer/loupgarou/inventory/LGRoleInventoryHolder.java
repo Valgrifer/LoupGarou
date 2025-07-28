@@ -4,8 +4,7 @@ import fr.valgrifer.loupgarou.roles.Role;
 import lombok.Getter;
 import org.bukkit.event.inventory.InventoryType;
 
-public class LGRoleInventoryHolder<R extends Role> extends LGInventoryHolder
-{
+public class LGRoleInventoryHolder<R extends Role> extends LGInventoryHolder {
     @Getter
     private final R role;
 
@@ -14,6 +13,7 @@ public class LGRoleInventoryHolder<R extends Role> extends LGInventoryHolder
 
         this.role = role;
     }
+
     public LGRoleInventoryHolder(InventoryType type, String title, R role) {
         super(type, title);
 

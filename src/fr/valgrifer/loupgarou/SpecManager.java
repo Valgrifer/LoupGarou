@@ -12,13 +12,8 @@ import java.util.function.Function;
 
 import static fr.valgrifer.loupgarou.utils.ChatColorQuick.*;
 
-public class SpecManager extends LGInventoryHolder
-{
+public class SpecManager extends LGInventoryHolder {
     private static SpecManager mainSpecManager = null;
-    public static SpecManager getMainSpecManager()
-    {
-        return mainSpecManager == null ? (mainSpecManager = new SpecManager()) : mainSpecManager;
-    }
 
     public SpecManager() {
         super(6, GOLD + "Spec");
@@ -26,41 +21,33 @@ public class SpecManager extends LGInventoryHolder
         setDefaultPreset(new SpecPreset(this));
     }
 
-    private static class SpecPreset extends MenuPreset
-    {
+    public static SpecManager getMainSpecManager() {
+        return mainSpecManager == null ? (mainSpecManager = new SpecManager()) : mainSpecManager;
+    }
+
+    private static class SpecPreset extends MenuPreset {
+        Function<LGPlayer, ItemStack> lobby;
+        Function<LGPlayer, ItemStack> inGame;
         public SpecPreset(LGInventoryHolder holder) {
             super(holder);
         }
 
-        Function<LGPlayer, ItemStack> lobby;
-        Function<LGPlayer, ItemStack> inGame;
-
         @Override
-        protected void preset()
-        {
-            lobby = lgp -> ItemBuilder
-                    .make(Material.PLAYER_HEAD)
-                    .setSkull(lgp.getPlayer())
-                    .setDisplayName(WHITE + lgp.getName())
-                    .build();
+        protected void preset() {
+            lobby = lgp -> ItemBuilder.make(Material.PLAYER_HEAD).setSkull(lgp.getPlayer()).setDisplayName(WHITE + lgp.getName()).build();
 
-            inGame = lgp -> ItemBuilder
-                    .make(Material.PLAYER_HEAD)
-                    .setSkull(lgp.getPlayer())
-                    .setDisplayName((lgp.isDead() ? GRAY + STRIKETHROUGH : WHITE + BOLD) + lgp.getName())
-                    .setLore(GRAY + (lgp.isDead() ? "étais" : "est"), lgp.getRevealRole())
-                    .build();
+            inGame = lgp -> ItemBuilder.make(Material.PLAYER_HEAD)
+                .setSkull(lgp.getPlayer())
+                .setDisplayName((lgp.isDead() ? GRAY + STRIKETHROUGH : WHITE + BOLD) + lgp.getName())
+                .setLore(GRAY + (lgp.isDead() ? "étais" : "est"), lgp.getRevealRole(true))
+                .build();
         }
 
         @Override
-        public void apply()
-        {
+        public void apply() {
             LGGame game = MainLg.getInstance().getCurrentGame();
-            getHolder().getInventory().setContents(
-                    game.getInGame()
-                            .parallelStream()
-                            .map(game.isStarted() ? inGame : lobby)
-                            .toArray(ItemStack[]::new));
+            getHolder().getInventory()
+                .setContents(game.getInGame().parallelStream().map(game.isStarted() ? inGame : lobby).toArray(ItemStack[]::new));
         }
 
         @Override

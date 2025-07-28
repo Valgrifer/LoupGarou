@@ -7,31 +7,35 @@ import org.bukkit.Bukkit;
 
 import static fr.valgrifer.loupgarou.utils.ChatColorQuick.*;
 
-public class RWolfClairvoyant extends Role{
-	public RWolfClairvoyant(LGGame game) {
-		super(game);
-	}
+public class RWolfClairvoyant extends Role {
+    public RWolfClairvoyant(LGGame game) {
+        super(game);
+    }
+
     public static RoleType _getType() {
         return RoleType.LOUP_GAROU;
     }
+
     public static RoleWinType _getWinType() {
         return RoleWinType.LOUP_GAROU;
     }
 
     public static String _getName() {
-        return RED+BOLD+"Loup Voyante";
+        return RED + BOLD + "Loup Voyante";
     }
 
     public static String _getFriendlyName() {
         return RClairvoyant._getFriendlyName();
     }
-	public static String _getShortDescription() {
-		return RWereWolf._getShortDescription();
-	}
-	
-	public static String _getDescription() {
-		return RWereWolf._getDescription()+WHITE+". Chaque nuit, tu peux espionner un joueur et découvrir sa véritable identité...";
-	}
+
+    public static String _getShortDescription() {
+        return RWereWolf._getShortDescription();
+    }
+
+    public static String _getDescription() {
+        return RWereWolf._getDescription() + WHITE + ". Chaque nuit, tu peux espionner un joueur et découvrir sa véritable identité...";
+    }
+
     public static String _getTask() {
         return RClairvoyant._getTask();
     }
@@ -39,6 +43,7 @@ public class RWolfClairvoyant extends Role{
     public static String _getBroadcastedTask() {
         return RClairvoyant._getBroadcastedTask();
     }
+
     @Override
     public int getTimeout() {
         return 15;
@@ -51,12 +56,11 @@ public class RWolfClairvoyant extends Role{
     }
 
     @Override
-    protected void onNightTurn(LGPlayer player, Runnable callback) {
+    protected boolean onNightTurn(LGPlayer player, Runnable callback) {
         player.showView();
 
         player.choose(choosen -> {
-            if(choosen == null || choosen == player)
-                return;
+            if (choosen == null || choosen == player) return;
 
             player.stopChoosing();
             player.hideView();
@@ -64,18 +68,22 @@ public class RWolfClairvoyant extends Role{
             LGRoleActionEvent event = new LGRoleActionEvent(getGame(), new RClairvoyant.LookAction(choosen), player);
             Bukkit.getPluginManager().callEvent(event);
             RClairvoyant.LookAction action = (RClairvoyant.LookAction) event.getAction();
-            if(!action.isCancelled())
-            {
+            if (!action.isCancelled()) {
                 LGPlayer target = action.getTarget();
-                player.sendActionBarMessage(YELLOW+BOLD+target.getName()+GOLD+" est "+YELLOW+BOLD+action.getRoleView().getPublicName(target));
-                player.sendMessage(GOLD+"Tu découvres que "+GRAY+BOLD+target.getName()+GOLD+" est "+action.getRoleView().getPublicName(target)+GOLD+".");
+                player.sendActionBarMessage(
+                    YELLOW + BOLD + target.getName() + GOLD + " est " + YELLOW + BOLD + action.getRoleView().getPublicName(target));
+                player.sendMessage(
+                    GOLD + "Tu découvres que " + GRAY + BOLD + target.getName() + GOLD + " est " + action.getRoleView().getPublicName(target) + GOLD +
+                        ".");
             }
-            else
-                player.sendMessage(RED+"Votre cible est immunisée.");
+            else player.sendMessage(RED + "Votre cible est immunisée.");
 
             callback.run();
         });
+
+        return true;
     }
+
     @Override
     protected void onNightTurnTimeout(LGPlayer player) {
         player.stopChoosing();

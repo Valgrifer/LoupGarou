@@ -1,18 +1,30 @@
 package fr.valgrifer.loupgarou.classes.chat;
 
-import fr.valgrifer.loupgarou.classes.LGPlayer;
+import fr.valgrifer.loupgarou.classes.LGChatType;
+import fr.valgrifer.loupgarou.classes.LGGame;
+import lombok.Getter;
 
-public class LGNoChat extends LGChat{
-	public LGNoChat() {
-		super(null);
-	}
+import javax.annotation.Nonnull;
 
-	public void sendMessage(LGPlayer sender, String message) {}
+public class LGNoChat extends LGChat {
+    public LGNoChat(LGGame game) {
+        super(game, LGChatType.NOCHAT);
+    }
 
-	public void join(LGPlayer player, LGChatCallback callback) {
-		
-	}
-	public void leave(LGPlayer player) {
-		
-	}
+    @Override
+    public void onChat(@Nonnull String message) { }
+
+    @Override
+    public void sendMessage(@Nonnull String message) { }
+
+    @Override
+    public void sendMessage(@Nonnull InterlocutorContext context, @Nonnull String message) { }
+
+    @Override
+    public String getName()
+    { return ""; }
+
+    @Override
+    public String receive(@Nonnull InterlocutorContext context, @Nonnull String message)
+    { return ""; }
 }

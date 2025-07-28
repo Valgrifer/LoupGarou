@@ -4,12 +4,13 @@ import net.minecraft.server.v1_16_R3.NBTTagCompound;
 
 import java.util.Set;
 
-public class NBTCompound implements fr.valgrifer.loupgarou.utils.nms.nbt.NBTCompound
-{
+public class NBTCompound implements fr.valgrifer.loupgarou.utils.nms.nbt.NBTCompound {
     private final NBTTagCompound handler;
+
     public NBTCompound(NBTTagCompound tag) {
         handler = tag;
     }
+
     public NBTCompound() {
         handler = new NBTTagCompound();
     }
@@ -181,12 +182,12 @@ public class NBTCompound implements fr.valgrifer.loupgarou.utils.nms.nbt.NBTComp
     }
 
     @Override
-    public  fr.valgrifer.loupgarou.utils.nms.nbt.NBTList getList(String var1) {
+    public fr.valgrifer.loupgarou.utils.nms.nbt.NBTList getList(String var1) {
         return new NBTList(handler.getList(var1, 0));
     }
 
     @Override
-    public  fr.valgrifer.loupgarou.utils.nms.nbt.NBTList getListOrDefault(String var1, fr.valgrifer.loupgarou.utils.nms.nbt.NBTList var2) {
+    public fr.valgrifer.loupgarou.utils.nms.nbt.NBTList getListOrDefault(String var1, fr.valgrifer.loupgarou.utils.nms.nbt.NBTList var2) {
         return containsKey(var1) ? new NBTList(handler.getList(var1, 0)) : var2;
     }
 

@@ -2,8 +2,7 @@ package fr.valgrifer.loupgarou.utils.nms.nbt;
 
 import java.util.Collection;
 
-public interface NBTList
-{
+public interface NBTList {
     Object getHandler();
 
     void add(Object var1);
