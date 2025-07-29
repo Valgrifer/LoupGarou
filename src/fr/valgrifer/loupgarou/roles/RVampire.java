@@ -166,12 +166,20 @@ public class RVampire extends Role implements CampTeam {
             return;
         }
 
-        vote = new LGVote(event.getCause(), getTimeout(), getTimeout() / 3, getGame(), event.isHideViewersMessage(), false,
-            (player, secondsLeft) -> !getPlayers().contains(player) ?
-                GOLD + "C'est au tour " + getFriendlyName() + " " + GOLD + "(" + YELLOW + secondsLeft + " s" + GOLD + ")" : player.getCache()
-                .has("vote") ?
-                BOLD + BLUE + "Vous votez pour " + RED + BOLD + player.getCache().<LGPlayer> get("vote").getName() :
-                GOLD + "Il vous reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter");
+        vote = LGVote.builder(getGame(), event.getCause())
+                       .timeout(getTimeout())
+                       .littleTimeout(getTimeout() / 3)
+                       .hideViewersMessage(event.isHideViewersMessage())
+                       .randomIfEqual(false)
+                       .generator(
+                               (player, secondsLeft) ->
+                                       !getPlayers().contains(player) ?
+                                               GOLD + "C'est au tour " + getFriendlyName() + " " + GOLD + "(" + YELLOW + secondsLeft + " s" + GOLD + ")" :
+                                               player.getCache().has("vote") ?
+                                                       BOLD + BLUE + "Vous votez pour " + RED + BOLD + player.getCache().<LGPlayer> get("vote").getName() :
+                                                       GOLD + "Il vous reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter")
+                       .build();
+
         for (LGPlayer lgp : getGame().getAlive())
             if (lgp.getRoleType() == RoleType.VAMPIRE) lgp.showView();
         for (LGPlayer player : getPlayers()) {

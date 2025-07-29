@@ -20,16 +20,17 @@ import static fr.valgrifer.loupgarou.utils.ChatColorQuick.GOLD;
 import static fr.valgrifer.loupgarou.utils.ChatColorQuick.RESET;
 
 public class VoteListener implements Listener {
-    private static final LGPlayer blank = new LGPlayer("Vote Blanc");
-    public static final ItemBuilder itemBlankVote = ItemBuilder.make(Material.PAPER)
-                                                             .setCustomId("blank_vote")
-                                                             .setDisplayName(RESET + GOLD + "Vote Blanc");
 
     @EventHandler
     public void onClick(PlayerAnimationEvent e) {
         if (e.getAnimationType() == PlayerAnimationType.ARM_SWING) LGPlayer.get(e.getPlayer()).chooseAction();
 
     }
+
+    private static final LGPlayer blank = new LGPlayer("Vote Blanc");
+    public static final ItemBuilder itemBlankVote = ItemBuilder.make(Material.PAPER)
+                                                            .setCustomId("blank_vote")
+                                                            .setDisplayName(RESET + GOLD + "Vote Blanc");
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onVoteStart(LGVoteStartEvent event) {

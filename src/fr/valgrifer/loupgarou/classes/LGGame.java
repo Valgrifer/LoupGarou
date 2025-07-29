@@ -879,10 +879,15 @@ public class LGGame implements Listener {
         }
 
         broadcastMessage(BLUE + "Il est temps de voter pour élire un " + DARK_PURPLE + BOLD + "Capitaine" + BLUE + ".", true);
-        vote = new LGVote(event.getCause(), 180, 20, this, event.isHideViewersMessage(), true,
-            (player, secondsLeft) -> player.getCache().has("vote") ?
-                GOLD + "Tu votes pour " + GRAY + BOLD + player.getCache().<LGPlayer> get("vote").getName() :
-                GOLD + "Il te reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter");
+        vote = LGVote.builder(this, event.getCause())
+                       .hideViewersMessage(event.isHideViewersMessage())
+                       .randomIfEqual(true)
+                       .generator(
+                               (player, secondsLeft) ->
+                                       player.getCache().has("vote") ?
+                                               GOLD + "Tu votes pour " + GRAY + BOLD + player.getCache().<LGPlayer> get("vote").getName() :
+                                               GOLD + "Il te reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter")
+                       .build();
         vote.start(getAlive(), getInGame(), () -> {
             if (vote.getChoosen() == null) setMayor(getAlive().get(random.nextInt(getAlive().size())));
             else setMayor(vote.getChoosen());
@@ -913,10 +918,15 @@ public class LGGame implements Listener {
 
         broadcastMessage(BLUE + "La phase des votes a commencé.", true);
         isPeopleVote = true;
-        vote = new LGVote(event.getCause(), 180, 20, this, event.isHideViewersMessage(), false,
-            (player, secondsLeft) -> player.getCache().has("vote") ?
-                GOLD + "Tu votes pour " + GRAY + BOLD + player.getCache().<LGPlayer> get("vote").getName() :
-                GOLD + "Il te reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter");
+
+        vote = LGVote.builder(this, event.getCause())
+                       .hideViewersMessage(event.isHideViewersMessage())
+                       .generator((
+                               player, secondsLeft) ->
+                                          player.getCache().has("vote") ?
+                                                  GOLD + "Tu votes pour " + GRAY + BOLD + player.getCache().<LGPlayer>get("vote").getName() :
+                                                  GOLD + "Il te reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter")
+                       .build();
         vote.start(getAlive(), getInGame(), () -> {
             isPeopleVote = false;
             LGVoteEndEvent voteEnd = new LGVoteEndEvent(this, vote, vote.getCause());
