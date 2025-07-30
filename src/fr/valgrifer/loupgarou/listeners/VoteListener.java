@@ -22,8 +22,10 @@ public class VoteListener implements Listener {
 
         LGPlayer lgp = LGPlayer.get(e.getPlayer());
 
-        if (!lgp.isCanChoose())
+        if (!lgp.isCanChoose()) {
+            e.setCancelled(true);
             return;
+        }
 
         lgp.chooseAction();
     }
@@ -34,7 +36,7 @@ public class VoteListener implements Listener {
 
         LGGame game = player.getGame();
 
-        if (game == null || !game.isStarted()) return;
+        if (game == null || !game.isStarted() || game.getVote() == null) return;
 
         if (!player.isCanChoose())
             return;
