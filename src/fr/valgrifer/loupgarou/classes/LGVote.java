@@ -19,10 +19,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -33,7 +29,7 @@ import java.util.stream.Collectors;
 
 import static fr.valgrifer.loupgarou.utils.ChatColorQuick.*;
 
-public class LGVote implements Listener
+public class LGVote
 {
     private static final ArmorStand eas = NMSUtils.getInstance().newArmorStand();
     @Getter
@@ -53,7 +49,8 @@ public class LGVote implements Listener
     @Getter
     private final Map<LGPlayer, List<LGPlayer>> votes = new HashMap<>();
     @SuppressWarnings({ "FieldCanBeLocal", "unused" })
-    private final boolean hideViewersMessage, randomIfEqual, blankVote;
+    @Getter
+    private final boolean hideViewersMessage, randomIfEqual, allowBlankVote;
     private final WrappedDataWatcher.WrappedDataWatcherObject invisible = new WrappedDataWatcher.WrappedDataWatcherObject(
             0,
             WrappedDataWatcher.Registry.get(Byte.class)
@@ -76,8 +73,7 @@ public class LGVote implements Listener
     private boolean mayorVote;
     private boolean ended;
 
-    public static LGVote.Builder builder(LGGame game, LGVoteCause cause)
-    {
+    public static LGVote.Builder builder(LGGame game, LGVoteCause cause) {
         return new LGVote.Builder(game, cause);
     }
 
@@ -88,7 +84,7 @@ public class LGVote implements Listener
             int littleTimeout,
             boolean hideViewersMessage,
             boolean randomIfEqual,
-            boolean blankVote,
+            boolean allowBlankVote,
             @Nonnull LGGame.TextGenerator generator)
     {
         this.cause = cause;
@@ -98,7 +94,7 @@ public class LGVote implements Listener
         this.game = game;
         this.generator = generator;
         this.hideViewersMessage = hideViewersMessage;
-        this.blankVote = blankVote;
+        this.allowBlankVote = allowBlankVote;
         this.randomIfEqual = randomIfEqual;
 
 
@@ -111,23 +107,24 @@ public class LGVote implements Listener
         this.participants = participants;
         this.viewers = viewers;
         game.wait(timeout, this::end, generator);
+        game.setVote(this);
 
         ItemStack blank = itemBlankVote.build();
         for (LGPlayer player : participants)
         {
             player.choose(getChooseCallback(player));
 
-            player.getPlayer().getInventory().setItem(itemBlankSlot, blank);
-            player.getPlayer().getInventory().setHeldItemSlot(0);
+            if (this.allowBlankVote) {
+                player.getPlayer().getInventory().setItem(itemBlankSlot, blank);
+                player.getPlayer().getInventory().setHeldItemSlot(0);
+            }
         }
-
-        Bukkit.getPluginManager().registerEvents(this, MainLg.getInstance());
     }
 
     public void start(List<LGPlayer> participants, List<LGPlayer> viewers, Runnable callback, ArrayList<LGPlayer> blacklisted)
     {
-        this.start(participants, viewers, callback);
         this.blacklisted = blacklisted;
+        this.start(participants, viewers, callback);
     }
 
     public void start(List<LGPlayer> participants, List<LGPlayer> viewers, Runnable callback, LGPlayer mayor)
@@ -145,10 +142,10 @@ public class LGVote implements Listener
             updateVotes(lgp, true);
 
         List<LGPlayer> voted = votes.entrySet()
-                                      .stream()
-                                      .filter(entry -> votes.values().stream()
-                                                               .noneMatch(list -> list.size() > entry.getValue().size()))
-                                      .map(Entry::getKey)
+                                       .stream()
+                                       .filter(entry -> votes.values().stream()
+                                                                .noneMatch(list -> list.size() > entry.getValue().size()))
+                                       .map(Entry::getKey)
                                        .filter(lgp -> lgp != blank)
                                        .collect(Collectors.toList());
 
@@ -220,6 +217,11 @@ public class LGVote implements Listener
             game.cancelWait();
             callback.run();
         }
+        game.setVote(null);
+    }
+
+    public List<LGPlayer> getBlacklisted() {
+        return new ArrayList<>(blacklisted);
     }
 
     public LGChooseCallback getChooseCallback(LGPlayer who)
@@ -233,8 +235,7 @@ public class LGVote implements Listener
     public void vote(LGPlayer voter, LGPlayer voted)
     {
         if (!participants.contains(voter) && !voter.isFakePlayer()) return;
-        if (blacklisted.contains(voted))
-        {
+        if (blacklisted.contains(voted)) {
             voter.sendMessage(RED + "Vous ne pouvez pas voter pour " + GRAY + BOLD + voted.getName() + RED + ".");
             return;
         }
@@ -243,25 +244,21 @@ public class LGVote implements Listener
         if (voted != null && voter.getPlayer() != null) votesSize++;
         if (voter.getCache().has("vote")) votesSize--;
 
-        if (votesSize == participants.size() && game.getWaitTicks() > littleTimeout * 20)
-        {
+        if (votesSize == participants.size() && game.getWaitTicks() > littleTimeout * 20) {
             votesSize = 999;
             game.wait(littleTimeout, initialTimeout, this::end, generator);
         }
         boolean changeVote = false;
         if (voter.getCache().has("vote"))
         {//On enlève l'ancien vote
-            LGPlayer devoted = voter.getCache().get("vote");
-            if (votes.containsKey(devoted))
-            {
+            LGPlayer devoted = voter.getCache().remove("vote");
+            if (votes.containsKey(devoted)) {
                 List<LGPlayer> voters = votes.get(devoted);
-                if (voters != null)
-                {
+                if (voters != null) {
                     voters.remove(voter);
                     if (voters.isEmpty()) votes.remove(devoted);
                 }
             }
-            voter.getCache().remove("vote");
             updateVotes(devoted);
             changeVote = true;
         }
@@ -275,40 +272,40 @@ public class LGVote implements Listener
             updateVotes(voted);
         }
 
-        if (voter.getPlayer() != null)
-        {
-            showVoting(voter, voted);
-            String message;
-            if (voted == blank) {
-                if (changeVote) {
-                    message = GRAY + BOLD + voter.getName() + GOLD + " a changé son vote pour un vote blanc.";
-                    voter.sendMessage(GOLD + "Tu as changé ton vote pour un vote blanc.");
-                }
-                else {
-                    message = GRAY + BOLD + voter.getName() + GOLD + " a voté blanc.";
-                    voter.sendMessage(GOLD + "Tu as voté blanc.");
-                }
-            }
-            else if (voted != null) {
-                if (changeVote) {
-                    message = GRAY + BOLD + voter.getName() + GOLD + " a changé son vote pour " + GRAY + BOLD + voted.getName() + GOLD + ".";
-                    voter.sendMessage(GOLD + "Tu as changé de vote pour " + GRAY + BOLD + voted.getName() + GOLD + ".");
-                }
-                else {
-                    message = GRAY + BOLD + voter.getName() + GOLD + " a voté pour " + GRAY + BOLD + voted.getName() + GOLD + ".";
-                    voter.sendMessage(GOLD + "Tu as voté pour " + GRAY + BOLD + voted.getName() + GOLD + ".");
-                }
-            }
-            else
-            {
-                message = GRAY + BOLD + voter.getName() + GOLD + " a annulé son vote.";
-                voter.sendMessage(GOLD + "Tu as annulé ton vote.");
-            }
+        if (voter.getPlayer() == null)
+            return;
 
-            if (!hideViewersMessage)
-                for (LGPlayer player : viewers)
-                    if (player != voter) player.sendMessage(message);
+        showVoting(voter, voted);
+        String message;
+        if (voted == blank) {
+            if (changeVote) {
+                message = GRAY + BOLD + voter.getName() + GOLD + " a changé son vote pour un vote blanc.";
+                voter.sendMessage(GOLD + "Tu as changé ton vote pour un vote blanc.");
+            }
+            else {
+                message = GRAY + BOLD + voter.getName() + GOLD + " a voté blanc.";
+                voter.sendMessage(GOLD + "Tu as voté blanc.");
+            }
         }
+        else if (voted != null) {
+            if (changeVote) {
+                message = GRAY + BOLD + voter.getName() + GOLD + " a changé son vote pour " + GRAY + BOLD + voted.getName() + GOLD + ".";
+                voter.sendMessage(GOLD + "Tu as changé de vote pour " + GRAY + BOLD + voted.getName() + GOLD + ".");
+            }
+            else {
+                message = GRAY + BOLD + voter.getName() + GOLD + " a voté pour " + GRAY + BOLD + voted.getName() + GOLD + ".";
+                voter.sendMessage(GOLD + "Tu as voté pour " + GRAY + BOLD + voted.getName() + GOLD + ".");
+            }
+        }
+        else
+        {
+            message = GRAY + BOLD + voter.getName() + GOLD + " a annulé son vote.";
+            voter.sendMessage(GOLD + "Tu as annulé ton vote.");
+        }
+
+        if (!hideViewersMessage)
+            for (LGPlayer player : viewers)
+                if (player != voter) player.sendMessage(message);
     }
 
     public List<LGPlayer> getVotes(LGPlayer voted)
@@ -475,23 +472,6 @@ public class LGVote implements Listener
             votes.remove(killed);
             latestTop.remove(killed);
         }
-    }
-
-    @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        LGPlayer player = LGPlayer.get(event.getPlayer());
-
-        LGGame game = player.getGame();
-
-        if (game == null || !game.isStarted()) return;
-
-        if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) return;
-
-        if (game.getVote() != this || !this.blankVote) return;
-
-        if (!ItemBuilder.checkId(event.getItem(), itemBlankVote.getCustomId())) return;
-
-        game.getVote().vote(player, blank);
     }
 
     @ToString

@@ -326,7 +326,7 @@ public class LGPlayer implements Interlocutor
                 }
         );
 
-        if (result.getHitEntity() instanceof Player)
+        if (result != null && result.getHitEntity() instanceof Player)
             return LGPlayer.get((Player) result.getHitEntity());
 
         return null;
