@@ -925,7 +925,7 @@ public class LGGame implements Listener {
                        .generator((
                                player, secondsLeft) ->
                                           player.getCache().has("vote") ?
-                                                  GOLD + "Tu votes pour " + GRAY + BOLD + player.getCache().<LGPlayer>get("vote").getName() :
+                                                  GOLD + "Tu votes pour " + GRAY + BOLD + player.getCache().<LGPlayer> get("vote").getName() :
                                                   GOLD + "Il te reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter")
                        .build();
         vote.start(getAlive(), getInGame(), () -> {

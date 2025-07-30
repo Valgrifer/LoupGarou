@@ -55,9 +55,9 @@ public class RVillagerVillager extends Role {
     public void onTarget(LGRoleActionEvent e) {
         if (e.getGame() != getGame()) return;
 
-        if (!e.isAction(RPsychopath.PsychopathTargetAction.class)) return;
+        if (!e.isAction(RPsychopath.PsychopathGuessAction.class)) return;
 
-        RPsychopath.PsychopathTargetAction action = (RPsychopath.PsychopathTargetAction) e.getAction();
+        RPsychopath.PsychopathGuessAction action = (RPsychopath.PsychopathGuessAction) e.getAction();
 
         if (action.getTarget().getRole() != this || action.getRole() != this) return;
 

@@ -8,9 +8,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import static fr.valgrifer.loupgarou.utils.ChatColorQuick.*;
 
@@ -72,8 +71,8 @@ public class RReaper extends Role {
         }
         else if (e.getReason() == Reason.VOTE) {
             int index = killed.getSpot();
-            new HashSet<>(Arrays.asList(this.getGame().getSpots().previousOf(index), this.getGame().getSpots().nextOf(index)))
-                    .stream()
+            Stream.of(this.getGame().getSpots().previousOf(index), this.getGame().getSpots().nextOf(index))
+                    .distinct()
                     .filter(Objects::nonNull)
                     .forEach(lgp -> {
                         LGPlayerKilledEvent killEvent = new LGPlayerKilledEvent(getGame(), lgp, Reason.FAUCHEUR);

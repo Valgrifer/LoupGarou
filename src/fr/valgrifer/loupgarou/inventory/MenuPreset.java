@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("unused")
-public abstract class MenuPreset {
+public class MenuPreset {
     public static final Slot lockSlot = new Slot(new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName(" "));
     private static final ItemBuilder baseBackButton = ItemBuilder.make(Material.ARROW).setCustomId("ac_back");
     protected final Slot[] content;
@@ -65,10 +65,7 @@ public abstract class MenuPreset {
     }
 
     public MenuPreset clone(LGInventoryHolder holder) {
-        MenuPreset nmp = new MenuPreset(holder, null) {
-            @Override
-            protected void preset() { }
-        };
+        MenuPreset nmp = new MenuPreset(holder, null);
 
         Arrays.setAll(nmp.content, i -> i < this.content.length ? this.content[i] : defaultFill);
         nmp.itemActions.putAll(itemActions);
@@ -139,7 +136,7 @@ public abstract class MenuPreset {
         }
     }
 
-    protected abstract void preset();
+    protected void preset() {}
 
     public void apply() {
         if (holder == null) return;

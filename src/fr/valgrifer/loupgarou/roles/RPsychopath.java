@@ -13,19 +13,20 @@ import org.bukkit.Material;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static fr.valgrifer.loupgarou.utils.ChatColorQuick.*;
 
-public class RPsychopath extends Role {
+public class RPsychopath extends Role implements Listener
+{
     public static final String LifeKey = "psychopath_life";
     public static final String SavedKey = "psychopath_saved";
     public static final String PsychopathItemId = "psychopath";
@@ -79,7 +80,10 @@ public class RPsychopath extends Role {
             }
 
             @Override
-            protected void preset() { }
+            public List<LGPlayer> getObjects() {
+                assert player.getGame() != null;
+                return player.getGame().getAlive(lgp -> lgp != player);
+            }
         };
 
         PaginationMapPreset<Role> rolePreset = new PaginationMapPreset<Role>(inventoryHolder) {
@@ -111,10 +115,11 @@ public class RPsychopath extends Role {
 
                 LGPlayer target = holder.getCache().get(PsychopathPlayerSelectedKey);
 
-                LGRoleActionEvent guessTargetEvent = new LGRoleActionEvent(lgp.getGame(), new PsychopathTargetAction(target, role), lgp);
+                assert lgp.getGame() != null;
+                LGRoleActionEvent guessTargetEvent = new LGRoleActionEvent(lgp.getGame(), new PsychopathGuessAction(target, role), lgp);
                 Bukkit.getPluginManager().callEvent(guessTargetEvent);
 
-                PsychopathTargetAction action = (PsychopathTargetAction) guessTargetEvent.getAction();
+                PsychopathGuessAction action = (PsychopathGuessAction) guessTargetEvent.getAction();
 
                 if (action.isForceConsume()) lgp.getPlayer().getInventory().setItem(8, null);
 
@@ -140,17 +145,14 @@ public class RPsychopath extends Role {
             }
 
             @Override
-            protected void preset() { }
+            public List<Role> getObjects()
+            {
+                return playerPreset.getObjects().stream().map(LGPlayer::getRole).distinct().collect(Collectors.toList());
+            }
         };
 
         inventoryHolder.savePreset("player", playerPreset);
         inventoryHolder.savePreset("role", rolePreset);
-
-        playerPreset.setObjectList(
-            player.getGame().getInGame().stream().filter(lgp -> lgp != player).collect(Collectors.toCollection(ArrayList::new)));
-
-        rolePreset.setObjectList(
-            new ArrayList<>(playerPreset.getObjectList().stream().map(LGPlayer::getRole).collect(Collectors.toCollection(HashSet::new))));
 
         return inventoryHolder;
     }
@@ -195,9 +197,12 @@ public class RPsychopath extends Role {
         player.getCache().set(LifeKey, 1);
     }
 
-    @EventHandler
-    public void onDay(LGDayStartEvent event) {
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onLGVoteStart(LGVoteStartEvent event) {
+        if (event.getCause() != LGVoteCause.VILLAGE) return;
         if (event.getGame() != getGame()) return;
+
+        vote = event.getVote();
 
         getGame().getAlive(lgPlayer -> lgPlayer.getCache().getBoolean(SavedKey)).forEach(lgPlayer -> {
             lgPlayer.getCache().remove(SavedKey);
@@ -207,9 +212,12 @@ public class RPsychopath extends Role {
         getPlayers().forEach(player -> player.getPlayer().getInventory().setItem(8, PsychopathItem));
     }
 
-    @EventHandler
-    public void onNight(LGDayEndEvent event) {
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onLGVoteEnd(LGVoteEndEvent event) {
+        if (event.getCause() != LGVoteCause.VILLAGE) return;
         if (event.getGame() != getGame()) return;
+
+        vote = null;
 
         getPlayers().forEach(player -> {
             player.getPlayer().getInventory().setItem(8, null);
@@ -217,7 +225,6 @@ public class RPsychopath extends Role {
         });
     }
 
-    @SuppressWarnings("rawtypes")
     @EventHandler
     public void onClick(PlayerInteractEvent event) {
         if (event.getHand() != EquipmentSlot.HAND) return;
@@ -230,11 +237,7 @@ public class RPsychopath extends Role {
 
         event.setCancelled(true);
 
-        LGInventoryHolder inventoryHolder = player.getCache().get(PsychopathInventoryKey);
-        if (inventoryHolder == null) player.getCache().set(PsychopathInventoryKey, inventoryHolder = makeInventory(player));
-
-        ((PaginationMapPreset) inventoryHolder.getPreset("player")).setObjectList(
-            player.getGame().getAlive().stream().filter(lgp -> lgp != player).collect(Collectors.toCollection(ArrayList::new)));
+        LGInventoryHolder inventoryHolder = player.getCache().computeIfAbsent(PsychopathInventoryKey, () -> makeInventory(player));
 
         inventoryHolder.loadPreset("player");
         inventoryHolder.getCache().remove(PsychopathPlayerSelectedKey);
@@ -244,26 +247,12 @@ public class RPsychopath extends Role {
 
     @EventHandler
     public void onDeathAnnouncement(LGDeathAnnouncementEvent e) {
-        if (e.getGame() == getGame() && (e.getReason() == PSYCHOPATH_GOOD || e.getReason() == PSYCHOPATH_BAD ||
-            (e.getKilled().getRole() == this && getGame().getRole(RPriestess.class) != null))) e.setShowedRole(HiddenRole.class);
+        if (e.getGame() != getGame())
+            return;
+
+        if ((e.getReason() == PSYCHOPATH_GOOD || e.getReason() == PSYCHOPATH_BAD || (e.getKilled().getRole() == this && getGame().getRole(RPriestess.class) != null)))
+            e.setShowedRole(HiddenRole.class);
     }
-
-    @EventHandler
-    public void onVoteStart(LGVoteStartEvent e) {
-        if (e.getGame() != getGame()) return;
-
-        if (e.getCause() != LGVoteCause.VILLAGE) return;
-
-        vote = e.getVote();
-    }
-
-    @EventHandler
-    public void onVoteEnd(LGVoteEndEvent e) {
-        if (e.getGame() != getGame()) return;
-
-        vote = null;
-    }
-
 
     @EventHandler
     public void onEndgameCheck(LGEndCheckEvent e) {
@@ -304,12 +293,12 @@ public class RPsychopath extends Role {
 
     @Setter
     @Getter
-    public static class PsychopathTargetAction implements LGRoleActionEvent.RoleAction, TakeTarget, Cancellable, AbilityConsume {
+    public static class PsychopathGuessAction implements LGRoleActionEvent.RoleAction, TakeTarget, Cancellable, AbilityConsume {
         private boolean cancelled;
         private boolean forceConsume;
         private LGPlayer target;
         private Role role;
-        public PsychopathTargetAction(LGPlayer target, Role role) {
+        public PsychopathGuessAction(LGPlayer target, Role role) {
             this.target = target;
             this.role = role;
         }

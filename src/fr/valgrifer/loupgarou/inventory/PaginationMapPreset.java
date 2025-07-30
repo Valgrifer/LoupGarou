@@ -2,13 +2,11 @@ package fr.valgrifer.loupgarou.inventory;
 
 import fr.valgrifer.loupgarou.utils.VariousUtils;
 import lombok.Getter;
-import lombok.Setter;
 import org.bukkit.Material;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -16,9 +14,6 @@ import static fr.valgrifer.loupgarou.utils.ChatColorQuick.GOLD;
 import static fr.valgrifer.loupgarou.utils.ChatColorQuick.GRAY;
 
 public abstract class PaginationMapPreset<T> extends MenuPreset {
-    @Getter
-    @Setter
-    private List<T> objectList = new ArrayList<>();
     @Getter
     private int maxPerPage;
     @Getter
@@ -50,10 +45,6 @@ public abstract class PaginationMapPreset<T> extends MenuPreset {
         }, (h, event) -> setPageIndex(getPageIndex() + 1));
     }
 
-    public int getSize() {
-        return objectList.size();
-    }
-
     public int getPageIndex() {
         return VariousUtils.MinMax(getHolder().getCache().get("pageIndex", 0), 0, getMaxPage() - 1);
     }
@@ -69,8 +60,12 @@ public abstract class PaginationMapPreset<T> extends MenuPreset {
 
     protected abstract void itemAction(LGInventoryHolder holder, InventoryClickEvent event, T obj);
 
+    public abstract List<T> getObjects();
+
     public void apply() {
         if (getHolder() == null) return;
+
+        List<T> objectList = this.getObjects();
 
         maxPerPage = (getHolder().getMaxLine() - 2) * 9;
         maxPage = (int) Math.ceil((double) objectList.size() / ((getHolder().getMaxLine() - 2) * 9));

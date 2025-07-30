@@ -2,6 +2,7 @@ package fr.valgrifer.loupgarou.utils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class VariableCache {
     private final Map<String, Object> cache = new HashMap<>();
@@ -26,6 +27,15 @@ public class VariableCache {
 
     public <T> T get(String key, T def) {
         return has(key) ? (T) cache.get(key) : def;
+    }
+
+    public <T> T computeIfAbsent(String key, Supplier<T> supplier) {
+        if (has(key)) return (T) cache.get(key);
+
+        T value = supplier.get();
+        cache.put(key, value);
+
+        return value;
     }
 
     public <T> T remove(String key) {

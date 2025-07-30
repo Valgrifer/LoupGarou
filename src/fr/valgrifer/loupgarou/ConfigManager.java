@@ -286,16 +286,15 @@ public class ConfigManager extends LGInventoryHolder
                     }
 
                     @Override
-                    public void apply()
-                    {
-                        this.setObjectList(
-                                MainLg.getInstance()
-                                        .getRoles()
-                                        .stream()
-                                        .filter(clazz -> !MainLg.getInstance().getNotSelectableRoles().contains(clazz) &&
-                                                                 (filters.get(selectedFilter).filter == null || filters.get(selectedFilter).filter.test(clazz)))
-                                        .collect(Collectors.toList()));
-                        super.apply();
+                    public List<Class<? extends Role>> getObjects() {
+                        return MainLg.getInstance()
+                                       .getRoles()
+                                       .stream()
+                                       .filter(clazz -> {
+                                           CompoFilter filter = filters.get(selectedFilter);
+                                           return !MainLg.getInstance().getNotSelectableRoles().contains(clazz) && (filter.filter == null || filter.filter.test(clazz));
+                                       })
+                                       .collect(Collectors.toList());
                     }
                 }
         );
