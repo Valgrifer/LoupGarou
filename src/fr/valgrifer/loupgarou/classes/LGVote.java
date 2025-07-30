@@ -36,8 +36,10 @@ import static fr.valgrifer.loupgarou.utils.ChatColorQuick.*;
 public class LGVote implements Listener
 {
     private static final ArmorStand eas = NMSUtils.getInstance().newArmorStand();
+    @Getter
     private static final LGPlayer blank = new LGPlayer("Vote Blanc");
-    public static final ItemBuilder itemBlankVote = ItemBuilder.make(Material.PAPER)
+    @Getter
+    private static final ItemBuilder itemBlankVote = ItemBuilder.make(Material.PAPER)
                                                             .setCustomId("blank_vote")
                                                             .setDisplayName(RESET + GOLD + "Vote Blanc");
     private static final int itemBlankSlot = 4;

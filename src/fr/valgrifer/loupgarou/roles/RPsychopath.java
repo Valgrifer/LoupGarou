@@ -50,7 +50,7 @@ public class RPsychopath extends Role implements Listener
         super(game);
     }
 
-    private static LGPrivateInventoryHolder makeInventory(@Nonnull LGPlayer player) {
+    private LGPrivateInventoryHolder makeInventory(@Nonnull LGPlayer player) {
         LGPrivateInventoryHolder inventoryHolder = new LGPrivateInventoryHolder(6, _getName(), player);
 
         PaginationMapPreset<LGPlayer> playerPreset = new PaginationMapPreset<LGPlayer>(inventoryHolder) {
@@ -81,8 +81,8 @@ public class RPsychopath extends Role implements Listener
 
             @Override
             public List<LGPlayer> getObjects() {
-                assert player.getGame() != null;
-                return player.getGame().getAlive(lgp -> lgp != player);
+                assert getGame() != null;
+                return getGame().getAlive(lgp -> lgp != player);
             }
         };
 
@@ -111,12 +111,9 @@ public class RPsychopath extends Role implements Listener
 
                 if (!(lgp.getRole() instanceof RPsychopath)) return;
 
-                RPsychopath lgr = (RPsychopath) lgp.getRole();
-
                 LGPlayer target = holder.getCache().get(PsychopathPlayerSelectedKey);
 
-                assert lgp.getGame() != null;
-                LGRoleActionEvent guessTargetEvent = new LGRoleActionEvent(lgp.getGame(), new PsychopathGuessAction(target, role), lgp);
+                LGRoleActionEvent guessTargetEvent = new LGRoleActionEvent(getGame(), new PsychopathGuessAction(target, role), lgp);
                 Bukkit.getPluginManager().callEvent(guessTargetEvent);
 
                 PsychopathGuessAction action = (PsychopathGuessAction) guessTargetEvent.getAction();
@@ -128,15 +125,15 @@ public class RPsychopath extends Role implements Listener
                     return;
                 }
 
-                LGPlayerKilledEvent killEvent = new LGPlayerKilledEvent(lgr.getGame(), action.isGoodGuess() ? action.getTarget() : lgp,
+                LGPlayerKilledEvent killEvent = new LGPlayerKilledEvent(getGame(), action.isGoodGuess() ? action.getTarget() : lgp,
                     action.isGoodGuess() ? PSYCHOPATH_GOOD : PSYCHOPATH_BAD);
                 Bukkit.getPluginManager().callEvent(killEvent);
 
                 if (!killEvent.isCancelled()) {
-                    lgp.getGame().kill(killEvent.getKilled(), killEvent.getReason(), true);
+                    getGame().kill(killEvent.getKilled(), killEvent.getReason(), true);
 
-                    lgr.vote.getParticipants().remove(killEvent.getKilled());
-                    lgr.vote.getVotes().remove(killEvent.getKilled());
+                    vote.getParticipants().remove(killEvent.getKilled());
+                    vote.getVotes().remove(killEvent.getKilled());
                     killEvent.getKilled().getPlayer().closeInventory();
                 }
 
@@ -145,8 +142,7 @@ public class RPsychopath extends Role implements Listener
             }
 
             @Override
-            public List<Role> getObjects()
-            {
+            public List<Role> getObjects() {
                 return playerPreset.getObjects().stream().map(LGPlayer::getRole).distinct().collect(Collectors.toList());
             }
         };
