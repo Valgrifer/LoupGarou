@@ -921,6 +921,7 @@ public class LGGame implements Listener {
 
         vote = LGVote.builder(this, event.getCause())
                        .hideViewersMessage(event.isHideViewersMessage())
+                       .allowBlankVote(true)
                        .generator((
                                player, secondsLeft) ->
                                           player.getCache().has("vote") ?

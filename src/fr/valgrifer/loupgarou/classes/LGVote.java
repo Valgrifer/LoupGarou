@@ -8,6 +8,7 @@ import fr.valgrifer.loupgarou.MainLg;
 import fr.valgrifer.loupgarou.classes.LGPlayer.LGChooseCallback;
 import fr.valgrifer.loupgarou.events.LGVoteLeaderChange;
 import fr.valgrifer.loupgarou.events.LGVoteStartEvent;
+import fr.valgrifer.loupgarou.inventory.ItemBuilder;
 import fr.valgrifer.loupgarou.utils.NMSUtils;
 import fr.valgrifer.loupgarou.utils.VariousUtils;
 import lombok.Getter;
@@ -18,28 +19,39 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import static fr.valgrifer.loupgarou.utils.ChatColorQuick.*;
 
-public class LGVote
+public class LGVote implements Listener
 {
     private static final ArmorStand eas = NMSUtils.getInstance().newArmorStand();
+    private static final LGPlayer blank = new LGPlayer("Vote Blanc");
+    public static final ItemBuilder itemBlankVote = ItemBuilder.make(Material.PAPER)
+                                                            .setCustomId("blank_vote")
+                                                            .setDisplayName(RESET + GOLD + "Vote Blanc");
+    private static final int itemBlankSlot = 4;
+
+
     @Getter
     private final LGVoteCause cause;
-    private final int initialTimeout;
-    private final int littleTimeout;
+    private final int initialTimeout, littleTimeout;
     private final LGGame game;
     private final LGGame.TextGenerator generator;
     @Getter
     private final Map<LGPlayer, List<LGPlayer>> votes = new HashMap<>();
     @SuppressWarnings({ "FieldCanBeLocal", "unused" })
-    private final boolean hideViewersMessage, randomIfEqual;
+    private final boolean hideViewersMessage, randomIfEqual, blankVote;
     private final WrappedDataWatcher.WrappedDataWatcherObject invisible = new WrappedDataWatcher.WrappedDataWatcherObject(
             0,
             WrappedDataWatcher.Registry.get(Byte.class)
@@ -74,6 +86,7 @@ public class LGVote
             int littleTimeout,
             boolean hideViewersMessage,
             boolean randomIfEqual,
+            boolean blankVote,
             @Nonnull LGGame.TextGenerator generator)
     {
         this.cause = cause;
@@ -83,6 +96,7 @@ public class LGVote
         this.game = game;
         this.generator = generator;
         this.hideViewersMessage = hideViewersMessage;
+        this.blankVote = blankVote;
         this.randomIfEqual = randomIfEqual;
 
 
@@ -95,30 +109,29 @@ public class LGVote
         this.participants = participants;
         this.viewers = viewers;
         game.wait(timeout, this::end, generator);
+
+        ItemStack blank = itemBlankVote.build();
         for (LGPlayer player : participants)
+        {
             player.choose(getChooseCallback(player));
+
+            player.getPlayer().getInventory().setItem(itemBlankSlot, blank);
+            player.getPlayer().getInventory().setHeldItemSlot(0);
+        }
+
+        Bukkit.getPluginManager().registerEvents(this, MainLg.getInstance());
     }
 
     public void start(List<LGPlayer> participants, List<LGPlayer> viewers, Runnable callback, ArrayList<LGPlayer> blacklisted)
     {
-        this.callback = callback;
-        this.participants = participants;
-        this.viewers = viewers;
-        game.wait(timeout, this::end, generator);
-        for (LGPlayer player : participants)
-            player.choose(getChooseCallback(player));
+        this.start(participants, viewers, callback);
         this.blacklisted = blacklisted;
     }
 
     public void start(List<LGPlayer> participants, List<LGPlayer> viewers, Runnable callback, LGPlayer mayor)
     {
-        this.callback = callback;
-        this.participants = participants;
-        this.viewers = viewers;
         this.mayor = mayor;
-        game.wait(timeout, this::end, generator);
-        for (LGPlayer player : participants)
-            player.choose(getChooseCallback(player));
+        this.start(participants, viewers, callback);
     }
 
     private void end()
@@ -128,65 +141,54 @@ public class LGVote
             showVoting(lgp, null);
         for (LGPlayer lgp : votes.keySet())
             updateVotes(lgp, true);
-        int     max   = 0;
-        boolean equal = false;
-        for (Entry<LGPlayer, List<LGPlayer>> entry : votes.entrySet())
-            if (entry.getValue().size() > max)
-            {
-                equal = false;
-                max = entry.getValue().size();
-                choosen = entry.getKey();
-            }
-            else if (entry.getValue().size() == max) equal = true;
-        for (LGPlayer player : participants)
-        {
+
+        List<LGPlayer> voted = votes.entrySet()
+                                      .stream()
+                                      .filter(entry -> votes.values().stream()
+                                                               .noneMatch(list -> list.size() > entry.getValue().size()))
+                                      .map(Entry::getKey)
+                                       .filter(lgp -> lgp != blank)
+                                       .collect(Collectors.toList());
+
+        boolean equal = voted.size() > 1;
+
+        choosen = voted.size() == 1 ? voted.stream().findFirst().orElse(null) : null;
+
+        for (LGPlayer player : participants) {
             player.getCache().remove("vote");
             player.stopChoosing();
-        }
-        if (equal) choosen = null;
-        if (equal && mayor == null && randomIfEqual)
-        {
-            List<LGPlayer> choosable = new ArrayList<>();
-            for (Entry<LGPlayer, List<LGPlayer>> entry : votes.entrySet())
-                if (entry.getValue().size() == max) choosable.add(entry.getKey());
-            choosen = choosable.get(game.getRandom().nextInt(choosable.size()));
+            player.getPlayer().getInventory().setItem(itemBlankSlot, null);
         }
 
-        if (equal && mayor != null && max != 0)
-        {
+        if (equal && mayor == null && randomIfEqual)
+            choosen = voted.get(game.getRandom().nextInt(voted.size()));
+
+        if (equal && mayor != null) {
             for (LGPlayer player : viewers)
                 player.sendMessage(BLUE + "Égalité, le " + DARK_PURPLE + BOLD + "Capitaine" + BLUE + " va départager les votes.");
             mayor.sendMessage(GOLD + "Tu dois choisir qui va mourir.");
 
-            List<LGPlayer> choosable = new ArrayList<>();
-            for (Entry<LGPlayer, List<LGPlayer>> entry : votes.entrySet())
-                if (entry.getValue().size() == max) choosable.add(entry.getKey());
-
-            for (int i = 0; i < choosable.size(); i++)
+            for (int i = 0; i < voted.size(); i++)
             {
-                LGPlayer lgp = choosable.get(i);
+                LGPlayer lgp = voted.get(i);
                 showArrow(mayor, lgp, -mayor.getPlayer().getEntityId() - i);
             }
 
             List<LGPlayer> blackListed = new ArrayList<>();
             for (LGPlayer player : participants)
-                if (!choosable.contains(player)) blackListed.add(player);
-                else
-                {
-                    VariousUtils.setWarning(player.getPlayer(), true);
-                }
+                if (!voted.contains(player)) blackListed.add(player);
+                else VariousUtils.setWarning(player.getPlayer(), true);
             mayorVote = true;
             game.wait(
                     30, () -> {
                         for (LGPlayer player : participants)
-                            if (choosable.contains(player)) VariousUtils.setWarning(player.getPlayer(), false);
+                            if (voted.contains(player))
+                                VariousUtils.setWarning(player.getPlayer(), false);
 
-                        for (int i = 0; i < choosable.size(); i++)
-                        {
+                        for (int i = 0; i < voted.size(); i++)
                             showArrow(mayor, null, -mayor.getPlayer().getEntityId() - i);
-                        }
                         //Choix au hasard d'un joueur si personne n'a été désigné
-                        choosen = choosable.get(game.getRandom().nextInt(choosable.size()));
+                        choosen = voted.get(game.getRandom().nextInt(voted.size()));
                         callback.run();
                     }, (player, secondsLeft) -> {
                         timeout = secondsLeft;
@@ -197,18 +199,14 @@ public class LGVote
                     }
             );
             mayor.choose(c -> {
-                if (c != null)
-                {
+                if (c != null) {
                     if (blackListed.contains(c)) mayor.sendMessage(DARK_RED + ITALIC + "Ce joueur n'est pas concerné par le choix.");
-                    else
-                    {
+                    else {
                         for (LGPlayer player : participants)
-                            if (choosable.contains(player)) VariousUtils.setWarning(player.getPlayer(), false);
+                            if (voted.contains(player)) VariousUtils.setWarning(player.getPlayer(), false);
 
-                        for (int i = 0; i < choosable.size(); i++)
-                        {
+                        for (int i = 0; i < voted.size(); i++)
                             showArrow(mayor, null, -mayor.getPlayer().getEntityId() - i);
-                        }
                         game.cancelWait();
                         choosen = c;
                         callback.run();
@@ -216,18 +214,17 @@ public class LGVote
                 }
             });
         }
-        else
-        {
+        else {
             game.cancelWait();
             callback.run();
         }
-
     }
 
     public LGChooseCallback getChooseCallback(LGPlayer who)
     {
         return choosen -> {
-            if (choosen != null) vote(who, choosen);
+            if (choosen != null)
+                vote(who, choosen);
         };
     }
 
@@ -280,15 +277,22 @@ public class LGVote
         {
             showVoting(voter, voted);
             String message;
-            if (voted != null)
-            {
-                if (changeVote)
-                {
+            if (voted == blank) {
+                if (changeVote) {
+                    message = GRAY + BOLD + voter.getName() + GOLD + " a changé son vote pour un vote blanc.";
+                    voter.sendMessage(GOLD + "Tu as changé ton vote pour un vote blanc.");
+                }
+                else {
+                    message = GRAY + BOLD + voter.getName() + GOLD + " a voté blanc.";
+                    voter.sendMessage(GOLD + "Tu as voté blanc.");
+                }
+            }
+            else if (voted != null) {
+                if (changeVote) {
                     message = GRAY + BOLD + voter.getName() + GOLD + " a changé son vote pour " + GRAY + BOLD + voted.getName() + GOLD + ".";
                     voter.sendMessage(GOLD + "Tu as changé de vote pour " + GRAY + BOLD + voted.getName() + GOLD + ".");
                 }
-                else
-                {
+                else {
                     message = GRAY + BOLD + voter.getName() + GOLD + " a voté pour " + GRAY + BOLD + voted.getName() + GOLD + ".";
                     voter.sendMessage(GOLD + "Tu as voté pour " + GRAY + BOLD + voted.getName() + GOLD + ".");
                 }
@@ -471,6 +475,23 @@ public class LGVote
         }
     }
 
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        LGPlayer player = LGPlayer.get(event.getPlayer());
+
+        LGGame game = player.getGame();
+
+        if (game == null || !game.isStarted()) return;
+
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_AIR) return;
+
+        if (game.getVote() != this || !this.blankVote) return;
+
+        if (!ItemBuilder.checkId(event.getItem(), itemBlankVote.getCustomId())) return;
+
+        game.getVote().vote(player, blank);
+    }
+
     @ToString
     public static class Builder {
         private final LGGame game;
@@ -479,60 +500,90 @@ public class LGVote
         private int littleTimeout = 20;
         private boolean hideViewersMessage = false;
         private boolean randomIfEqual = false;
+        private boolean blankVote = false;
         private @Nonnull LGGame.TextGenerator generator = defaultGenerator();
 
-        public Builder(@Nonnull LGGame game, @Nonnull LGVoteCause cause) {
+        public Builder(@Nonnull LGGame game, @Nonnull LGVoteCause cause)
+        {
             this.game = game;
             this.cause = cause;
         }
 
-        private LGGame.TextGenerator defaultGenerator() {
-            return (lgp, secondsLeft) -> RED+BOLD+"Tu ne peux pas jouer";
+        private LGGame.TextGenerator defaultGenerator()
+        {
+            return (lgp, secondsLeft) -> RED + BOLD + "Tu ne peux pas jouer";
         }
 
-        public Builder timeout(int val) {
-            timeout = val;
+        public Builder timeout(int timeout)
+        {
+            this.timeout = timeout;
             return this;
         }
-        public int timeout() {
+
+        public int timeout()
+        {
             return timeout;
         }
 
-        public Builder littleTimeout(int val) {
-            littleTimeout = val;
+        public Builder littleTimeout(int littleTimeout)
+        {
+            this.littleTimeout = littleTimeout;
             return this;
         }
-        public int littleTimeout() {
+
+        public int littleTimeout()
+        {
             return littleTimeout;
         }
 
-        public Builder hideViewersMessage(boolean val) {
-            hideViewersMessage = val;
+        public Builder hideViewersMessage(boolean hideViewersMessage)
+        {
+            this.hideViewersMessage = hideViewersMessage;
             return this;
         }
-        public boolean hideViewersMessage() {
+
+        public boolean hideViewersMessage()
+        {
             return hideViewersMessage;
         }
 
-        public Builder randomIfEqual(boolean val) {
-            randomIfEqual = val;
+        public Builder randomIfEqual(boolean randomIfEqual)
+        {
+            this.randomIfEqual = randomIfEqual;
             return this;
         }
-        public boolean randomIfEqual() {
+
+        public boolean randomIfEqual()
+        {
             return randomIfEqual;
         }
 
-        public Builder generator(LGGame.TextGenerator val) {
-            if (val != null) generator = val;
-            else generator = defaultGenerator();
+        public Builder allowBlankVote(boolean blankVote)
+        {
+            this.blankVote = blankVote;
             return this;
         }
-        public LGGame.TextGenerator generator() {
+
+        public boolean allowBlankVote()
+        {
+            return blankVote;
+        }
+
+        public Builder generator(LGGame.TextGenerator generator)
+        {
+            if (generator != null) this.generator = generator;
+            else this.generator = defaultGenerator();
+            return this;
+        }
+
+        public LGGame.TextGenerator generator()
+        {
             return generator;
         }
 
-        public LGVote build() {
-            return new LGVote(game, cause, timeout, littleTimeout, hideViewersMessage, randomIfEqual, generator);
+        public LGVote build()
+        {
+            return new LGVote(game, cause, timeout, littleTimeout, hideViewersMessage, randomIfEqual, blankVote, generator);
         }
     }
 }
