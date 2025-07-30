@@ -46,7 +46,7 @@ public abstract class PaginationMapPreset<T> extends MenuPreset {
     }
 
     public int getPageIndex() {
-        return VariousUtils.MinMax(getHolder().getCache().get("pageIndex", 0), 0, getMaxPage() - 1);
+        return VariousUtils.MinMax(getHolder().getCache().get("pageIndex", 0), 0, Math.max(getMaxPage() - 1, 0));
     }
 
     public void setPageIndex(int index) {
@@ -68,13 +68,13 @@ public abstract class PaginationMapPreset<T> extends MenuPreset {
         List<T> objectList = this.getObjects();
 
         maxPerPage = (getHolder().getMaxLine() - 2) * 9;
-        maxPage = (int) Math.ceil((double) objectList.size() / ((getHolder().getMaxLine() - 2) * 9));
+        maxPage = (int) Math.max(Math.ceil((double) objectList.size() / maxPerPage), 1);
 
         ItemBuilder[] contentBuilder = new ItemBuilder[getHolder().getMaxSlot()];
 
         int pageIndex = getPageIndex();
 
-        int i = 0, offset = getMaxPerPage() * pageIndex, to = Math.min(getMaxPerPage(), objectList.size() - offset);
+        int i = 0, offset = getMaxPerPage() * pageIndex, to = VariousUtils.MinMax(getMaxPerPage(), 0, objectList.size() - offset);
         for (; i < to; i++) {
             T obj = objectList.get(i + offset);
             contentBuilder[i] = mapList(obj);
