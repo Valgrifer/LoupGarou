@@ -20,7 +20,12 @@ public class VoteListener implements Listener {
         if (ItemBuilder.checkId(e.getPlayer().getInventory().getItemInMainHand(), LGVote.getItemBlankVote().getCustomId()))
             return;
 
-        LGPlayer.get(e.getPlayer()).chooseAction();
+        LGPlayer lgp = LGPlayer.get(e.getPlayer());
+
+        if (!lgp.isCanChoose())
+            return;
+
+        lgp.chooseAction();
     }
 
     @EventHandler
@@ -30,6 +35,9 @@ public class VoteListener implements Listener {
         LGGame game = player.getGame();
 
         if (game == null || !game.isStarted()) return;
+
+        if (!player.isCanChoose())
+            return;
 
         if (!game.getVote().isAllowBlankVote()) return;
 

@@ -58,6 +58,9 @@ public class LGPlayer implements Interlocutor
     @Getter
     private Role role = null;
     private LGChooseCallback chooseCallback = null;
+    @Setter
+    @Getter
+    private boolean canChoose = true;
     private List<LGPlayer> blacklistedChoice = new ArrayList<>(0);
     @Getter
     private VariableCache cache = new VariableCache();
@@ -103,6 +106,7 @@ public class LGPlayer implements Interlocutor
         lgp.dead = false;
         lgp.role = null;
         lgp.chooseCallback = null;
+        lgp.canChoose = true;
         lgp.blacklistedChoice = new ArrayList<>(0);
         lgp.cache = new VariableCache();
         lgp.game = null;
@@ -184,6 +188,7 @@ public class LGPlayer implements Interlocutor
     public void choose(LGChooseCallback callback, LGPlayer... blacklisted) {
         this.blacklistedChoice = blacklisted == null ? new ArrayList<>(0) : Arrays.asList(blacklisted);
         this.chooseCallback = callback;
+        this.canChoose = true;
 //		sendMessage(GRAY+ITALIC+"TIP: Regardez un joueur et tapez le afin de le sélectionner.");
     }
 
