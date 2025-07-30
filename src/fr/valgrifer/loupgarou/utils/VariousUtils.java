@@ -116,17 +116,20 @@ public class VariousUtils {
     }
 
     public static String frenchFormatList(List<String> list) {
+        return frenchFormatList(list, "et ");
+    }
+    public static String frenchFormatList(List<String> list, String lastJoiner) {
         if (list == null || list.isEmpty()) return "";
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < list.size() - 1; i++) {
             sb.append(list.get(i)).append(", ");
         }
-        sb.append("et ").append(list.get(list.size() - 1));
+        sb.append(lastJoiner).append(" ").append(list.get(list.size() - 1));
         return sb.toString();
     }
 
-    public static double getAngle(Location from, Location to) {
+    public static float getAngle(Location from, Location to) {
         double deltaZ = from.getBlockZ() - to.getBlockZ();
         double deltaX = from.getBlockX() - to.getBlockX();
         double angleRadian = Math.atan2(deltaZ, deltaX);
@@ -135,6 +138,6 @@ public class VariousUtils {
         if (angleDegres < -180)
             angleDegres += 360;
 
-        return angleDegres;
+        return (float) angleDegres;
     }
 }

@@ -25,23 +25,32 @@ import java.util.stream.Collectors;
 
 import static fr.valgrifer.loupgarou.utils.ChatColorQuick.*;
 
-public class RPsychopath extends Role implements Listener
-{
+public class RPsychopath extends Role implements Listener {
     public static final String LifeKey = "psychopath_life";
     public static final String SavedKey = "psychopath_saved";
     public static final String PsychopathItemId = "psychopath";
     public static final ItemStack PsychopathItem = ItemBuilder.make(Material.BOOK)
-        .setCustomId(PsychopathItemId)
-        .setDisplayName(RESET + "Deviner & Tuer")
-        .setLore(GRAY + "Durant le jour", GRAY + "tu peux deviner le role d'un joueur", GRAY + "si tu as raison il meurt sur le coup",
-            GRAY + "mais si tu as tort tu mourras.")
-        .build();
-    public static final LGPlayerKilledEvent.Reason PSYCHOPATH_GOOD = LGPlayerKilledEvent.Reason.register("PSYCHOPATH_GOOD",
-        GRAY + BOLD + "%s" + DARK_RED + " est mort d'une crise cardiaque?");
-    public static final LGPlayerKilledEvent.Reason PSYCHOPATH_BAD = LGPlayerKilledEvent.Reason.register("PSYCHOPATH_BAD",
-        PSYCHOPATH_GOOD.getMessage());
-    public static final LGWinType PSYCHOPATH = LGWinType.register("PSYCHOPATH",
-        GOLD + BOLD + ITALIC + "La partie a été gagnée par " + _getFriendlyName() + GOLD + BOLD + ITALIC + " !");
+                                                           .setCustomId(PsychopathItemId)
+                                                           .setDisplayName(RESET + "Deviner & Tuer")
+                                                           .setLore(
+                                                                   GRAY + "Durant le jour",
+                                                                   GRAY + "tu peux deviner le role d'un joueur",
+                                                                   GRAY + "si tu as raison il meurt sur le coup",
+                                                                   GRAY + "mais si tu as tort tu mourras."
+                                                           )
+                                                           .build();
+    public static final LGPlayerKilledEvent.Reason PSYCHOPATH_GOOD = LGPlayerKilledEvent.Reason.register(
+            "PSYCHOPATH_GOOD",
+            GRAY + BOLD + "%s" + DARK_RED + " est mort d'une crise cardiaque?"
+    );
+    public static final LGPlayerKilledEvent.Reason PSYCHOPATH_BAD = LGPlayerKilledEvent.Reason.register(
+            "PSYCHOPATH_BAD",
+            PSYCHOPATH_GOOD.getMessage()
+    );
+    public static final LGWinType PSYCHOPATH = LGWinType.register(
+            "PSYCHOPATH",
+            GOLD + BOLD + ITALIC + "La partie a été gagnée par " + _getFriendlyName() + GOLD + BOLD + ITALIC + " !"
+    );
     private static final String PsychopathInventoryKey = "psychopath_inventory";
     private static final String PsychopathPlayerSelectedKey = "psychopath_player_selected";
     private LGVote vote = null;
@@ -60,7 +69,7 @@ public class RPsychopath extends Role implements Listener
                     @Override
                     public ItemBuilder getItem(LGInventoryHolder h) {
                         return getDefaultItem().setDisplayName(GRAY + "Page " + GOLD + (getPageIndex() + 1))
-                            .setLore(AQUA + BOLD + "Click " + GRAY + "pour sélectionner le joueur");
+                                       .setLore(AQUA + BOLD + "Click " + GRAY + "pour sélectionner le joueur");
                     }
                 };
             }
@@ -68,9 +77,9 @@ public class RPsychopath extends Role implements Listener
             @Override
             protected ItemBuilder mapList(LGPlayer player) {
                 return ItemBuilder.make(Material.PLAYER_HEAD)
-                    .setCustomId(player.getPlayer().getUniqueId().toString())
-                    .setDisplayName(RESET + player.getName())
-                    .setSkull(player.getPlayer());
+                               .setCustomId(player.getPlayer().getUniqueId().toString())
+                               .setDisplayName(RESET + player.getName())
+                               .setSkull(player.getPlayer());
             }
 
             @Override
@@ -93,7 +102,7 @@ public class RPsychopath extends Role implements Listener
                     @Override
                     public ItemBuilder getItem(LGInventoryHolder h) {
                         return getDefaultItem().setDisplayName(GRAY + "Page " + GOLD + (getPageIndex() + 1))
-                            .setLore(AQUA + BOLD + "Click " + GRAY + "pour sélectionner le role du joueur");
+                                       .setLore(AQUA + BOLD + "Click " + GRAY + "pour sélectionner le role du joueur");
                     }
                 };
             }
@@ -105,28 +114,25 @@ public class RPsychopath extends Role implements Listener
 
             @Override
             protected void itemAction(LGInventoryHolder holder, InventoryClickEvent event, Role role) {
-                if (!(holder instanceof LGPrivateInventoryHolder)) return;
-
-                LGPlayer lgp = ((LGPrivateInventoryHolder) holder).getPlayer();
-
-                if (!(lgp.getRole() instanceof RPsychopath)) return;
-
                 LGPlayer target = holder.getCache().get(PsychopathPlayerSelectedKey);
 
-                LGRoleActionEvent guessTargetEvent = new LGRoleActionEvent(getGame(), new PsychopathGuessAction(target, role), lgp);
+                LGRoleActionEvent guessTargetEvent = new LGRoleActionEvent(getGame(), new PsychopathGuessAction(target, role), player);
                 Bukkit.getPluginManager().callEvent(guessTargetEvent);
 
                 PsychopathGuessAction action = (PsychopathGuessAction) guessTargetEvent.getAction();
 
-                if (action.isForceConsume()) lgp.getPlayer().getInventory().setItem(8, null);
+                if (!action.isCancelled() || action.isForceConsume())
+                    player.getPlayer().getInventory().setItem(8, null);
 
-                if (action.isCancelled()) {
-                    lgp.getPlayer().closeInventory();
+                player.getPlayer().closeInventory();
+
+                if (action.isCancelled())
                     return;
-                }
 
-                LGPlayerKilledEvent killEvent = new LGPlayerKilledEvent(getGame(), action.isGoodGuess() ? action.getTarget() : lgp,
-                    action.isGoodGuess() ? PSYCHOPATH_GOOD : PSYCHOPATH_BAD);
+                LGPlayerKilledEvent killEvent = new LGPlayerKilledEvent(
+                        getGame(), action.isGoodGuess() ? action.getTarget() : player,
+                        action.isGoodGuess() ? PSYCHOPATH_GOOD : PSYCHOPATH_BAD
+                );
                 Bukkit.getPluginManager().callEvent(killEvent);
 
                 if (!killEvent.isCancelled()) {
@@ -136,9 +142,6 @@ public class RPsychopath extends Role implements Listener
                     vote.getVotes().remove(killEvent.getKilled());
                     killEvent.getKilled().getPlayer().closeInventory();
                 }
-
-                lgp.getPlayer().getInventory().setItem(8, null);
-                lgp.getPlayer().closeInventory();
             }
 
             @Override
@@ -175,16 +178,8 @@ public class RPsychopath extends Role implements Listener
 
     public static String _getDescription() {
         return _getShortDescription() + WHITE +
-            ". Durant le jour, tu peux deviner le role d'un joueur, si tu as raison il meurt sur le coup, mais si tu as tort tu mourras. " +
-            "Vous aurez également une vie supplémentaire contre les " + RoleWinType.LOUP_GAROU.getColoredName(BOLD) + WHITE + ". ";
-    }
-
-    public static String _getTask() {
-        return "";
-    }
-
-    public static String _getBroadcastedTask() {
-        return "";
+                       ". Durant le jour, tu peux deviner le role d'un joueur, si tu as raison il meurt sur le coup, mais si tu as tort tu mourras. " +
+                       "Vous aurez également une vie supplémentaire contre les " + RoleWinType.LOUP_GAROU.getColoredName(BOLD) + WHITE + ". ";
     }
 
     @Override
@@ -202,10 +197,13 @@ public class RPsychopath extends Role implements Listener
 
         getGame().getAlive(lgPlayer -> lgPlayer.getCache().getBoolean(SavedKey)).forEach(lgPlayer -> {
             lgPlayer.getCache().remove(SavedKey);
-            lgPlayer.sendMessage(BLUE + "Votre vie a été consumée cette nuit, vous devrez être plus vigilant à partir de maintenant.");
+            lgPlayer.sendMessage(DARK_AQUA + "Votre vie a été consumée cette nuit, vous devrez être plus vigilant à partir de maintenant.");
         });
 
-        getPlayers().forEach(player -> player.getPlayer().getInventory().setItem(8, PsychopathItem));
+        getPlayers()
+                .stream()
+                .filter(LGPlayer::isRoleActive)
+                .forEach(player -> player.getPlayer().getInventory().setItem(8, PsychopathItem));
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -274,8 +272,8 @@ public class RPsychopath extends Role implements Listener
         if (e.getGame() != getGame()) return;
 
         if (!e.isCancelled() && (e.getReason() == LGPlayerKilledEvent.Reason.LOUP_GAROU || e.getReason() == LGPlayerKilledEvent.Reason.LOUP_BLANC ||
-            e.getReason() == LGPlayerKilledEvent.Reason.GM_LOUP_GAROU || e.getReason() == LGPlayerKilledEvent.Reason.ASSASSIN) &&
-            e.getKilled().getCache().get(LifeKey, 0) > 0 && e.getKilled().isRoleActive()) {
+                                         e.getReason() == LGPlayerKilledEvent.Reason.GM_LOUP_GAROU || e.getReason() == LGPlayerKilledEvent.Reason.ASSASSIN) &&
+                    e.getKilled().getCache().get(LifeKey, 0) > 0 && e.getKilled().isRoleActive()) {
             e.setCancelled(true);
             e.getKilled().getCache().set(LifeKey, e.getKilled().getCache().<Integer> get(LifeKey) - 1);
             e.getKilled().getCache().set(SavedKey, true);
@@ -294,6 +292,7 @@ public class RPsychopath extends Role implements Listener
         private boolean forceConsume;
         private LGPlayer target;
         private Role role;
+
         public PsychopathGuessAction(LGPlayer target, Role role) {
             this.target = target;
             this.role = role;
