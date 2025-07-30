@@ -125,4 +125,16 @@ public class VariousUtils {
         sb.append("et ").append(list.get(list.size() - 1));
         return sb.toString();
     }
+
+    public static double getAngle(Location from, Location to) {
+        double deltaZ = from.getBlockZ() - to.getBlockZ();
+        double deltaX = from.getBlockX() - to.getBlockX();
+        double angleRadian = Math.atan2(deltaZ, deltaX);
+        double angleDegres = Math.toDegrees(angleRadian) - 90;
+
+        if (angleDegres < -180)
+            angleDegres += 360;
+
+        return angleDegres;
+    }
 }

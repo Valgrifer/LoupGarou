@@ -128,22 +128,14 @@ public class MainLg extends JavaPlugin {
 
                 Player player = (Player) sender;
                 Location loc = player.getLocation();
+
                 List<Object> list = (List<Object>) getConfig().getList("spawns", new ArrayList<>());
-
-                double deltaZ = this.centerLocation.getBlockZ() - loc.getBlockZ();
-                double deltaX = this.centerLocation.getBlockX() - loc.getBlockX();
-                double angleRadian = Math.atan2(deltaZ, deltaX);
-                double angleDegres = Math.toDegrees(angleRadian) - 90;
-
-                if (angleDegres < -180)
-                    angleDegres += 360;
-
                 list.add(
-                    Arrays.asList((double) loc.getBlockX(), loc.getY(), (double) loc.getBlockZ(), angleDegres, 15D));
+                    Arrays.asList((double) loc.getBlockX(), loc.getY(), (double) loc.getBlockZ(), VariousUtils.getAngle(this.centerLocation, loc), 15D));
                 getConfig().set("spawns", list);
                 saveConfig();
 
-                sender.sendMessage(String.format(GREEN + "La position a bien été ajoutée ! (%s, %s, %s; %s; %s)", loc.getBlockX(), loc.getY(), loc.getBlockZ(), angleDegres, 15D));
+                sender.sendMessage(GREEN + "La position a bien été ajoutée !");
                 return true;
             }
             if (args.length >= 1 && args[0].equalsIgnoreCase("debug")) {
