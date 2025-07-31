@@ -11,6 +11,7 @@ import fr.valgrifer.loupgarou.utils.VariousUtils;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -272,14 +273,24 @@ public class RPuppeteer extends Role implements Listener {
             if (event.getReason() == LGPlayerKilledEvent.Reason.LOUP_GAROU || event.getReason() == LGPlayerKilledEvent.Reason.GM_LOUP_GAROU)
                 targets.add(event.getKilled());
         }
-        else if (this.previousTargets.contains(event.getKilled()) && event.getKilled().getCache().getBoolean(PuppetTargetKey) && event.getReason() == LGPlayerKilledEvent.Reason.LOUP_GAROU || event.getReason() == LGPlayerKilledEvent.Reason.VOTE)
-            getPlayers()
-                    .stream()
-                    .filter(LGPlayer::isRoleActive)
-                    .forEach(lgp -> {
-                        lgp.getCache().set(PowerCountKey, lgp.getCache().get(PowerCountKey, 0) + 1);
-                        lgp.sendMessage(DARK_AQUA + "Votre pouvoir se renforce.");
-                    });
+        else {
+            if (event.getKilled().getRole() instanceof RPuppeteer) {
+                event.getKilled().getPlayer().getInventory().setItem(8, null);
+                event.getKilled().getPlayer().closeInventory();
+            }
+
+            if (this.previousTargets.contains(event.getKilled()) &&
+                        event.getKilled().getCache().getBoolean(PuppetTargetKey) &&
+                        (event.getReason() == LGPlayerKilledEvent.Reason.LOUP_GAROU ||
+                        event.getReason() == LGPlayerKilledEvent.Reason.VOTE))
+                getPlayers()
+                        .stream()
+                        .filter(LGPlayer::isRoleActive)
+                        .forEach(lgp -> {
+                            lgp.getCache().set(PowerCountKey, lgp.getCache().get(PowerCountKey, 0) + 1);
+                            lgp.sendMessage(DARK_AQUA + "Votre pouvoir se renforce.");
+                        });
+        }
     }
 
     @EventHandler
@@ -302,22 +313,6 @@ public class RPuppeteer extends Role implements Listener {
                         player.leaveChat();
                         player.hideView();
                     });
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onSkinChange(LGSkinLoadEvent e) {
-        if (e.getGame() != getGame())
-            return;
-
-        RWereWolf role = getGame().getRole(RWereWolf.class);
-
-        if (role == null)
-            return;
-
-        if (role.getVisiblePlayers().contains(e.getPlayer()) && getPlayers().contains(e.getTo()) && role.showSkins) {
-            e.getProfile().getProperties().removeAll("textures");
-            e.getProfile().getProperties().put("textures", LGCustomSkin.WEREWOLF.getProperty());
-        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -400,15 +395,35 @@ public class RPuppeteer extends Role implements Listener {
         });
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onSkinChange(LGSkinLoadEvent e) {
+        if (e.getGame() != getGame())
+            return;
+
+        RWereWolf role = getGame().getRole(RWereWolf.class);
+
+        if (role == null)
+            return;
+
+        if (role.getVisiblePlayers().contains(e.getPlayer()) && getPlayers().contains(e.getTo()) && role.showSkins) {
+            e.getProfile().getProperties().removeAll("textures");
+            e.getProfile().getProperties().put("textures", LGCustomSkin.WEREWOLF.getProperty());
+        }
+    }
 
     @EventHandler
-    public void onPlayerKill(LGNightPlayerPreKilledEvent e) {
-        if (e.getGame() != getGame()) return;
+    public void onUpdatePrefix(LGUpdatePrefixEvent e) {
+        if (e.getGame() != getGame())
+            return;
 
-        if (e.getKilled().getRole() instanceof RPuppeteer) {
-            e.getKilled().getPlayer().getInventory().setItem(8, null);
-            e.getKilled().getPlayer().closeInventory();
-        }
+        RWereWolf role = getGame().getRole(RWereWolf.class);
+
+        if (role == null)
+            return;
+
+        if (e.getGame() == getGame())
+            if (role.getVisiblePlayers().contains(e.getPlayer()) && getPlayers().contains(e.getTo()))
+                e.setColorName(ChatColor.RED);
     }
 
     @Setter
