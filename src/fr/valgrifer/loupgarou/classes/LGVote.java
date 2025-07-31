@@ -6,6 +6,7 @@ import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import com.comphenix.protocol.wrappers.WrappedWatchableObject;
 import fr.valgrifer.loupgarou.MainLg;
 import fr.valgrifer.loupgarou.classes.LGPlayer.LGChooseCallback;
+import fr.valgrifer.loupgarou.events.LGVoteEndEvent;
 import fr.valgrifer.loupgarou.events.LGVoteLeaderChange;
 import fr.valgrifer.loupgarou.events.LGVoteStartEvent;
 import fr.valgrifer.loupgarou.inventory.ItemBuilder;
@@ -188,7 +189,7 @@ public class LGVote
                             showArrow(mayor, null, -mayor.getPlayer().getEntityId() - i);
                         //Choix au hasard d'un joueur si personne n'a été désigné
                         choosen = voted.get(game.getRandom().nextInt(voted.size()));
-                        callback.run();
+                        _end();
                     }, (player, secondsLeft) -> {
                         timeout = secondsLeft;
                         return
@@ -208,16 +209,21 @@ public class LGVote
                             showArrow(mayor, null, -mayor.getPlayer().getEntityId() - i);
                         game.cancelWait();
                         choosen = c;
-                        callback.run();
+                        _end();
                     }
                 }
             });
         }
         else {
             game.cancelWait();
-            callback.run();
+            _end();
         }
         game.setVote(null);
+    }
+
+    private void _end() {
+        Bukkit.getPluginManager().callEvent(new LGVoteEndEvent(game, this, getCause()));
+        callback.run();
     }
 
     public List<LGPlayer> getBlacklisted() {

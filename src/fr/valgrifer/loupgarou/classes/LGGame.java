@@ -923,29 +923,28 @@ public class LGGame implements Listener {
         LGVote.builder(this, event.getCause())
                        .hideViewersMessage(event.isHideViewersMessage())
                        .allowBlankVote(true)
-                       .generator((
-                               player, secondsLeft) ->
-                                          player.getCache().has("vote") ?
-                                                  GOLD + "Tu votes pour " + GRAY + BOLD + player.getCache().<LGPlayer> get("vote").getName() :
-                                                  GOLD + "Il te reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter")
+                       .generator((player, secondsLeft) -> {
+                           LGPlayer voted = player.getCache().get("vote");
+
+                           if (voted == null)
+                               return GOLD + "Il te reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter";
+
+                           if (voted == LGVote.getBlank())
+                               return GOLD + "Tu votes blanc";
+
+                           return GOLD + "Tu votes pour " + GRAY + BOLD + voted.getName();
+                       })
                        .build()
                 .start(getAlive(), getInGame(), () -> {
                     isPeopleVote = false;
-                    LGVoteEndEvent voteEnd = new LGVoteEndEvent(this, vote, vote.getCause());
-                    Bukkit.getPluginManager().callEvent(voteEnd);
                     if (vote.getChoosen() == null || (vote.isMayorVote() && getMayor() == null))
                         broadcastMessage(BLUE + "Personne n'est mort aujourd'hui.", true);
                     else {
                         LGPlayerKilledEvent killEvent = new LGPlayerKilledEvent(this, vote.getChoosen(), Reason.VOTE);
                         Bukkit.getPluginManager().callEvent(killEvent);
-                        if (killEvent.isCancelled()) {
-                            nextNight();
-                            return;
-                        }
-                        if (kill(killEvent.getKilled(), killEvent.getReason(), true)) {
-                            nextNight();
-                            return;
-                        }
+
+                        if (!killEvent.isCancelled())
+                            kill(killEvent.getKilled(), killEvent.getReason(), true);
                     }
                     nextNight();
                 }, mayor);
