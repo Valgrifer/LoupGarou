@@ -273,8 +273,9 @@ public class LGGame implements Listener {
 
             player.setGameMode(GameMode.ADVENTURE);
             broadcastMessage(
-                GRAY + "Le joueur " + DARK_GRAY + lgp.getName() + GRAY + " a rejoint la partie " + BLUE + "(" + DARK_GRAY + inGame.size() + GRAY +
-                    "/" + DARK_GRAY + maxPlayers + BLUE + ")", true);
+                    GRAY + "Le joueur " + DARK_GRAY + lgp.getName() + GRAY + " a rejoint la partie " + BLUE + "(" + DARK_GRAY + inGame.size() + GRAY +
+                            "/" + DARK_GRAY + maxPlayers + BLUE + ")", true
+            );
 
             Bukkit.getPluginManager().callEvent(new LGGameJoinEvent(this, lgp));
             //AutoStart
@@ -293,30 +294,30 @@ public class LGGame implements Listener {
     }
 
     public void updateStart() {
-        if (!isStarted()) if (inGame.size() ==
-            maxPlayers) {//Il faut que la partie soit totalement remplie pour qu'elle démarre car sinon, tous les rôles ne seraient pas distribués
-            for (LGPlayer lgp : getInGame()) {
-                CustomScoreboard scoreboard = new CustomScoreboard(GRAY + "", lgp);
-                scoreboard.getLine(0).setDisplayName(GOLD + "La partie va démarrer...");
-                lgp.setScoreboard(scoreboard);
-            }
-            if (startingTask == null) {
-                startingTask = new BukkitRunnable() {
-                    int timeLeft = 5 + 1;
+        if (!isStarted())
+            if (inGame.size() == maxPlayers) {//Il faut que la partie soit totalement remplie pour qu'elle démarre car sinon, tous les rôles ne seraient pas distribués
+                for (LGPlayer lgp : getInGame()) {
+                    CustomScoreboard scoreboard = new CustomScoreboard(GRAY + "", lgp);
+                    scoreboard.getLine(0).setDisplayName(GOLD + "La partie va démarrer...");
+                    lgp.setScoreboard(scoreboard);
+                }
+                if (startingTask == null) {
+                    startingTask = new BukkitRunnable() {
+                        int timeLeft = 5 + 1;
 
-                    @Override
-                    public void run() {
-                        if (--timeLeft == 0)//start
-                            start();
-                        else sendActionBarMessage(GOLD + "Démarrage dans " + YELLOW + timeLeft + GOLD + "...");
-                    }
-                }.runTaskTimer(MainLg.getInstance(), 20, 20);
+                        @Override
+                        public void run() {
+                            if (--timeLeft == 0)//start
+                                start();
+                            else sendActionBarMessage(GOLD + "Démarrage dans " + YELLOW + timeLeft + GOLD + "...");
+                        }
+                    }.runTaskTimer(MainLg.getInstance(), 20, 20);
+                }
             }
-        }
-        else if (startingTask != null) {
-            startingTask.cancel();
-            broadcastMessage(RED + ITALIC + "Le démarrage de la partie a été annulé car une personne l'a quittée !", true);
-        }
+            else if (startingTask != null) {
+                startingTask.cancel();
+                broadcastMessage(RED + ITALIC + "Le démarrage de la partie a été annulé car une personne l'a quittée !", true);
+            }
     }
 
     public void start() {
@@ -337,7 +338,7 @@ public class LGGame implements Listener {
         Collections.shuffle(list);
         for (LGPlayer lgp : getInGame()) {
             List<Double> location = (List<Double>) list.remove(0);
-            Player p = lgp.getPlayer();
+            Player       p        = lgp.getPlayer();
             p.setWalkSpeed(0);
             p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 99999, 180, false, false));
             spots.set(original.indexOf(location), lgp);
@@ -372,11 +373,13 @@ public class LGGame implements Listener {
                 if (timeLeft == 5 * 2 - 1) {
                     for (LGPlayer lgp : getInGame()) {
                         lgp.sendMessage(
-                            DARK_GRAY + "Projet organisé par : " + YELLOW + BOLD + "Shytoos" + DARK_GRAY + ".\nPlugin développé par : " + YELLOW +
-                                BOLD + "Leomelki" + DARK_GRAY + ".\nPlugin Continué par : " + YELLOW + BOLD + "Valgrifer" + DARK_GRAY + ".\n");
-                        lgp.sendTitle("",
-                            DARK_GRAY + DARK_GRAY + "Plugin LoupGarou par " + YELLOW + BOLD + "Leomelki" + DARK_GRAY + " & " + YELLOW + BOLD +
-                                "Shytoos" + DARK_GRAY + " & " + YELLOW + BOLD + "Valgrifer", 40);
+                                DARK_GRAY + "Projet organisé par : " + YELLOW + BOLD + "Shytoos" + DARK_GRAY + ".\nPlugin développé par : " + YELLOW +
+                                        BOLD + "Leomelki" + DARK_GRAY + ".\nPlugin Continué par : " + YELLOW + BOLD + "Valgrifer" + DARK_GRAY + ".\n");
+//                        lgp.sendTitle(
+//                                "",
+//                                DARK_GRAY + DARK_GRAY + "Plugin LoupGarou par " + YELLOW + BOLD + "Leomelki" + DARK_GRAY + " & " + YELLOW + BOLD +
+//                                        "Shytoos" + DARK_GRAY + " & " + YELLOW + BOLD + "Valgrifer", 40
+//                        );
                         lgp.getPlayer().getInventory().clear();
                         lgp.getPlayer().updateInventory();
                     }
@@ -401,11 +404,11 @@ public class LGGame implements Listener {
         started = false;
 
         for (Role role : getRoles().stream()
-            .sorted((o1, o2) -> (o2 instanceof CampTeam ? 1 : 0) - (o1 instanceof CampTeam ? 1 : 0))
-            .collect(Collectors.toCollection(ArrayList::new))) {
+                                 .sorted((o1, o2) -> (o2 instanceof CampTeam ? 1 : 0) - (o1 instanceof CampTeam ? 1 : 0))
+                                 .collect(Collectors.toCollection(ArrayList::new))) {
             while (role.getWaitedPlayers() > 0) {
-                int randomized = random.nextInt(toGive.size());
-                LGPlayer player = toGive.remove(randomized);
+                int      randomized = random.nextInt(toGive.size());
+                LGPlayer player     = toGive.remove(randomized);
 
                 role.join(player);
                 WrapperPlayServerUpdateHealth update = new WrapperPlayServerUpdateHealth();
@@ -451,10 +454,10 @@ public class LGGame implements Listener {
 
         for (LGPlayer lgp : getInGame())
             lgp.getScoreboard()
-                .setLines(roles.parallelStream()
-                    .map(role -> YELLOW + "" + rolesAlive.get(role) + " " + GOLD + "- " + YELLOW +
-                        role.getScoreBoardName().replace(BOLD.toString(), ""))
-                    .toArray(String[]::new));
+                    .setLines(roles.parallelStream()
+                                      .map(role -> YELLOW + "" + rolesAlive.get(role) + " " + GOLD + "- " + YELLOW +
+                                                           role.getScoreBoardName().replace(BOLD.toString(), ""))
+                                      .toArray(String[]::new));
     }
 
     public List<LGPlayer> getAlive() {
@@ -482,23 +485,29 @@ public class LGGame implements Listener {
         if (mayorKilled()) {//mort du maire
             broadcastMessage(BLUE + "Le " + DARK_PURPLE + BOLD + "Capitaine" + BLUE + " est mort, il désigne un joueur en remplaçant.", true);
             getMayor().sendMessage(GOLD + "Choisis un joueur qui deviendra " + DARK_PURPLE + BOLD + "Capitaine" + GOLD + " à son tour.");
-            LGGame.this.wait(30, () -> {
-                mayor.stopChoosing();
-                setMayor(getAlive().get(random.nextInt(getAlive().size())));
-                broadcastMessage(GRAY + BOLD + mayor.getName() + BLUE + " devient le nouveau " + DARK_PURPLE + BOLD + "Capitaine" + BLUE + ".", true);
-                nextNight();
-            }, (player, secondsLeft) -> YELLOW + mayor.getName() + GOLD + " choisit qui sera le nouveau " + DARK_PURPLE + BOLD + "Capitaine" + GOLD +
-                " (" + YELLOW + secondsLeft + " s" + GOLD + ")");
-            mayor.choose((choosen) -> {
-                if (choosen != null) {
-                    mayor.stopChoosing();
-                    cancelWait();
-                    setMayor(choosen);
-                    broadcastMessage(GRAY + BOLD + mayor.getName() + BLUE + " devient le nouveau " + DARK_PURPLE + BOLD + "Capitaine" + BLUE + ".",
-                        true);
-                    nextNight();
-                }
-            }, mayor);
+            LGGame.this.wait(
+                    30, () -> {
+                        mayor.stopChoosing();
+                        setMayor(getAlive().get(random.nextInt(getAlive().size())));
+                        broadcastMessage(GRAY + BOLD + mayor.getName() + BLUE + " devient le nouveau " + DARK_PURPLE + BOLD + "Capitaine" + BLUE + ".", true);
+                        nextNight();
+                    }, (player, secondsLeft) -> YELLOW + mayor.getName() + GOLD + " choisit qui sera le nouveau " + DARK_PURPLE + BOLD + "Capitaine" + GOLD +
+                                                        " (" + YELLOW + secondsLeft + " s" + GOLD + ")"
+            );
+            mayor.choose(
+                    (choosen) -> {
+                        if (choosen != null) {
+                            mayor.stopChoosing();
+                            cancelWait();
+                            setMayor(choosen);
+                            broadcastMessage(
+                                    GRAY + BOLD + mayor.getName() + BLUE + " devient le nouveau " + DARK_PURPLE + BOLD + "Capitaine" + BLUE + ".",
+                                    true
+                            );
+                            nextNight();
+                        }
+                    }, mayor
+            );
             return;
         }
 
@@ -517,8 +526,10 @@ public class LGGame implements Listener {
                 }
             }
         }.runTaskTimer(MainLg.getInstance(), 1, 1);
-        LGGame.this.wait(timeout, this::nextNight_,
-            (player, secondsLeft) -> GOLD + "La nuit va tomber dans " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : ""));
+        LGGame.this.wait(
+                timeout, this::nextNight_,
+                (player, secondsLeft) -> GOLD + "La nuit va tomber dans " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "")
+        );
     }
 
     private void nextNight_() {
@@ -580,11 +591,13 @@ public class LGGame implements Listener {
 
             for (LGPlayer lgp : getInGame())
                 if (lgp == killed) {
-                    WrapperPlayServerPlayerInfo info = new WrapperPlayServerPlayerInfo();
-                    List<PlayerInfoData> infos = new ArrayList<>();
+                    WrapperPlayServerPlayerInfo info  = new WrapperPlayServerPlayerInfo();
+                    List<PlayerInfoData>        infos = new ArrayList<>();
                     info.setAction(PlayerInfoAction.REMOVE_PLAYER);
-                    infos.add(new PlayerInfoData(new WrappedGameProfile(lgp.getPlayer().getUniqueId(), lgp.getName()), 0, NativeGameMode.ADVENTURE,
-                        WrappedChatComponent.fromText(lgp.getName())));
+                    infos.add(new PlayerInfoData(
+                            new WrappedGameProfile(lgp.getPlayer().getUniqueId(), lgp.getName()), 0, NativeGameMode.ADVENTURE,
+                            WrappedChatComponent.fromText(lgp.getName())
+                    ));
                     info.setData(infos);
                     info.sendPacket(lgp.getPlayer());
                 }
@@ -600,8 +613,8 @@ public class LGGame implements Listener {
                 LGDeathAnnouncementEvent event = new LGDeathAnnouncementEvent(this, lgp, killed, reason);
                 Bukkit.getPluginManager().callEvent(event);
                 if (!event.isMessageHidden()) lgp.sendMessage(
-                    String.format(reason.getMessage(), killed.getName()) + ", il était " + killed.getRevealRole(event.getShowedRole()) + DARK_RED +
-                        ".");
+                        String.format(reason.getMessage(), killed.getName()) + ", il était " + killed.getRevealRole(event.getShowedRole()) + DARK_RED +
+                                ".");
             }
 
 
@@ -648,9 +661,9 @@ public class LGGame implements Listener {
         for (LGPlayer lgp : getInGame())//Avoid bugs
             if (lgp.getPlayer() != null) {
                 event.getGame()
-                    .broadcastMessage(
-                        GRAY + "" + (lgp.isDead() ? STRIKETHROUGH : BOLD) + lgp.getName() + BLUE + (lgp.isDead() ? " était " : " est ") +
-                            lgp.getRevealRole(true) + BLUE + ".");
+                        .broadcastMessage(
+                                GRAY + "" + (lgp.isDead() ? STRIKETHROUGH : BOLD) + lgp.getName() + BLUE + (lgp.isDead() ? " était " : " est ") +
+                                        lgp.getRevealRole(true) + BLUE + ".");
                 lgp.getPlayer().closeInventory();
             }
 
@@ -666,11 +679,15 @@ public class LGGame implements Listener {
 
         broadcastMessage(winType.getMessage(), true);
         if (winType != LGWinType.EQUAL)
-            broadcastMessage(GOLD + BOLD + ITALIC + "Bravo à " + reverseWinners.stream().reduce("", (previous, lgPlayer) -> {
-                if (previous.equals("")) return GRAY + "" + BOLD + lgPlayer.getName();
-                if (!previous.contains(" ")) return GRAY + "" + BOLD + lgPlayer.getName() + GOLD + BOLD + ITALIC + " et " + previous;
-                return GRAY + "" + BOLD + lgPlayer.getName() + GOLD + BOLD + ITALIC + ", " + previous;
-            }, String::concat) + GOLD + BOLD + ITALIC + " !", true);
+            broadcastMessage(
+                    GOLD + BOLD + ITALIC + "Bravo à " + reverseWinners.stream().reduce(
+                            "", (previous, lgPlayer) -> {
+                                if (previous.equals("")) return GRAY + "" + BOLD + lgPlayer.getName();
+                                if (!previous.contains(" ")) return GRAY + "" + BOLD + lgPlayer.getName() + GOLD + BOLD + ITALIC + " et " + previous;
+                                return GRAY + "" + BOLD + lgPlayer.getName() + GOLD + BOLD + ITALIC + ", " + previous;
+                            }, String::concat
+                    ) + GOLD + BOLD + ITALIC + " !", true
+            );
         for (LGPlayer lgp : getInGame()) {
             lgp.leaveChat();
             lgp.joinChat(this.getChat(LGChatType.SPEC));
@@ -721,76 +738,80 @@ public class LGGame implements Listener {
         Bukkit.getPluginManager().callEvent(eventPreNightEnd);
         if (eventPreNightEnd.isCancelled()) return;
 
-        wait(2, () -> {
-            broadcastSpacer();
-            broadcastMessage(BLUE + "----------- " + BOLD + "Jour n°" + night + BLUE + " -----------", true);
-            broadcastMessage(DARK_GRAY + ITALIC + "Le jour se lève sur le village...");
+        wait(
+                2, () -> {
+                    broadcastSpacer();
+                    broadcastMessage(BLUE + "----------- " + BOLD + "Jour n°" + night + BLUE + " -----------", true);
+                    broadcastMessage(DARK_GRAY + ITALIC + "Le jour se lève sur le village...");
 
-            for (LGPlayer p : getInGame()) {
-                p.stopAudio(LGSound.AMBIENT_NIGHT);
-                p.playAudio(LGSound.START_DAY, 0.5);
-                p.playAudio(LGSound.AMBIENT_DAY, 0.07);
-            }
-
-            LGNightEndEvent eventNightEnd = new LGNightEndEvent(this);
-            Bukkit.getPluginManager().callEvent(eventNightEnd);
-            if (eventNightEnd.isCancelled()) return;
-
-            int died = 0;
-            boolean endGame = false;
-
-            for (Entry<Reason, LGPlayer> entry : deaths.entrySet()) {
-                if (entry.getKey() == Reason.DONT_DIE) continue;
-                if (entry.getValue()
-                    .isDead())//On ne fait pas mourir quelqu'un qui est déjà mort (résout le problème du dictateur tué par le chasseur)
-                    continue;
-                if (entry.getValue().getPlayer() != null) {//S'il a deco bah au moins ça crash pas hehe
-                    LGPlayerKilledEvent event = new LGPlayerKilledEvent(this, entry.getValue(), entry.getKey());
-                    Bukkit.getPluginManager().callEvent(event);
-                    if (!event.isCancelled()) {
-                        endGame |= kill(event.getKilled(), event.getReason(), false);
-                        died++;
+                    for (LGPlayer p : getInGame()) {
+                        p.stopAudio(LGSound.AMBIENT_NIGHT);
+                        p.playAudio(LGSound.START_DAY, 0.5);
+                        p.playAudio(LGSound.AMBIENT_DAY, 0.07);
                     }
-                }
-            }
-            deaths.clear();
-            if (died == 0) broadcastMessage(BLUE + "Étonnamment, personne n'est mort cette nuit.");
 
-            day = true;
-            for (LGPlayer player : getInGame()) {
-                player.showView();
+                    LGNightEndEvent eventNightEnd = new LGNightEndEvent(this);
+                    Bukkit.getPluginManager().callEvent(eventNightEnd);
+                    if (eventNightEnd.isCancelled()) return;
 
-                Bukkit.getScheduler().runTaskLater(MainLg.getInstance(), () -> {
-                    player.updatePrefix();
-                    player.updateOwnSkin();
-                    player.updateSkin();
-                }, 20L);
-            }
+                    int     died    = 0;
+                    boolean endGame = false;
 
-
-            new BukkitRunnable() {
-                int timeoutLeft = 20;
-
-                @Override
-                public void run() {
-                    if (timeoutLeft++ > 20) {
-                        if (timeoutLeft == 20 + (2 * 20)) cancel();
-                        WrapperPlayServerUpdateTime time = new WrapperPlayServerUpdateTime();
-                        time.setAgeOfTheWorld(0);
-                        time.setTimeOfDay(LGGame.this.time = (long) (18000 - (timeoutLeft - 20D) / (20 * 2D) * 12000D));
-                        for (LGPlayer lgp : getInGame())
-                            time.sendPacket(lgp.getPlayer());
+                    for (Entry<Reason, LGPlayer> entry : deaths.entrySet()) {
+                        if (entry.getKey() == Reason.DONT_DIE) continue;
+                        if (entry.getValue()
+                                    .isDead())//On ne fait pas mourir quelqu'un qui est déjà mort (résout le problème du dictateur tué par le chasseur)
+                            continue;
+                        if (entry.getValue().getPlayer() != null) {//S'il a deco bah au moins ça crash pas hehe
+                            LGPlayerKilledEvent event = new LGPlayerKilledEvent(this, entry.getValue(), entry.getKey());
+                            Bukkit.getPluginManager().callEvent(event);
+                            if (!event.isCancelled()) {
+                                endGame |= kill(event.getKilled(), event.getReason(), false);
+                                died++;
+                            }
+                        }
                     }
+                    deaths.clear();
+                    if (died == 0) broadcastMessage(BLUE + "Étonnamment, personne n'est mort cette nuit.");
+
+                    day = true;
+                    for (LGPlayer player : getInGame()) {
+                        player.showView();
+
+                        Bukkit.getScheduler().runTaskLater(
+                                MainLg.getInstance(), () -> {
+                                    player.updatePrefix();
+                                    player.updateOwnSkin();
+                                    player.updateSkin();
+                                }, 20L
+                        );
+                    }
+
+
+                    new BukkitRunnable() {
+                        int timeoutLeft = 20;
+
+                        @Override
+                        public void run() {
+                            if (timeoutLeft++ > 20) {
+                                if (timeoutLeft == 20 + (2 * 20)) cancel();
+                                WrapperPlayServerUpdateTime time = new WrapperPlayServerUpdateTime();
+                                time.setAgeOfTheWorld(0);
+                                time.setTimeOfDay(LGGame.this.time = (long) (18000 - (timeoutLeft - 20D) / (20 * 2D) * 12000D));
+                                for (LGPlayer lgp : getInGame())
+                                    time.sendPacket(lgp.getPlayer());
+                            }
+                        }
+                    }.runTaskTimer(MainLg.getInstance(), 1, 1);
+
+                    LGPreDayStartEvent dayStart = new LGPreDayStartEvent(this);
+                    Bukkit.getPluginManager().callEvent(dayStart);
+                    if (dayStart.isCancelled()) return;
+
+                    if (endGame) checkEndGame();
+                    else startDay();
                 }
-            }.runTaskTimer(MainLg.getInstance(), 1, 1);
-
-            LGPreDayStartEvent dayStart = new LGPreDayStartEvent(this);
-            Bukkit.getPluginManager().callEvent(dayStart);
-            if (dayStart.isCancelled()) return;
-
-            if (endGame) checkEndGame();
-            else startDay();
-        });
+        );
     }
 
     public void startDay() {
@@ -806,23 +827,29 @@ public class LGGame implements Listener {
         if (mayorKilled()) {//mort du maire
             broadcastMessage(BLUE + "Le " + DARK_PURPLE + BOLD + "Capitaine" + BLUE + " est mort, il désigne un joueur en remplaçant.", true);
             getMayor().sendMessage(GOLD + "Choisis un joueur qui deviendra " + DARK_PURPLE + BOLD + "Capitaine" + GOLD + " à son tour.");
-            LGGame.this.wait(30, () -> {
-                mayor.stopChoosing();
-                setMayor(getAlive().get(random.nextInt(getAlive().size())));
-                broadcastMessage(GRAY + BOLD + mayor.getName() + BLUE + " devient le nouveau " + DARK_PURPLE + BOLD + "Capitaine" + BLUE + ".", true);
-                startDay();
-            }, (player, secondsLeft) -> YELLOW + mayor.getName() + GOLD + " choisit qui sera le nouveau " + DARK_PURPLE + BOLD + "Capitaine" + GOLD +
-                " (" + YELLOW + secondsLeft + " s" + GOLD + ")");
-            mayor.choose((choosen) -> {
-                if (choosen != null) {
-                    mayor.stopChoosing();
-                    cancelWait();
-                    setMayor(choosen);
-                    broadcastMessage(GRAY + BOLD + mayor.getName() + BLUE + " devient le nouveau " + DARK_PURPLE + BOLD + "Capitaine" + BLUE + ".",
-                        true);
-                    startDay();
-                }
-            }, mayor);
+            LGGame.this.wait(
+                    30, () -> {
+                        mayor.stopChoosing();
+                        setMayor(getAlive().get(random.nextInt(getAlive().size())));
+                        broadcastMessage(GRAY + BOLD + mayor.getName() + BLUE + " devient le nouveau " + DARK_PURPLE + BOLD + "Capitaine" + BLUE + ".", true);
+                        startDay();
+                    }, (player, secondsLeft) -> YELLOW + mayor.getName() + GOLD + " choisit qui sera le nouveau " + DARK_PURPLE + BOLD + "Capitaine" + GOLD +
+                                                        " (" + YELLOW + secondsLeft + " s" + GOLD + ")"
+            );
+            mayor.choose(
+                    (choosen) -> {
+                        if (choosen != null) {
+                            mayor.stopChoosing();
+                            cancelWait();
+                            setMayor(choosen);
+                            broadcastMessage(
+                                    GRAY + BOLD + mayor.getName() + BLUE + " devient le nouveau " + DARK_PURPLE + BOLD + "Capitaine" + BLUE + ".",
+                                    true
+                            );
+                            startDay();
+                        }
+                    }, mayor
+            );
             return;
         }
         new BukkitRunnable() {
@@ -863,8 +890,8 @@ public class LGGame implements Listener {
         if (e.getGame() == this) {
             e.getProfile().getProperties().removeAll("textures");
             e.getProfile()
-                .getProperties()
-                .put("textures", getMayor() == e.getPlayer() ? LGCustomSkin.MAYOR.getProperty() : LGCustomSkin.VILLAGER.getProperty());
+                    .getProperties()
+                    .put("textures", getMayor() == e.getPlayer() ? LGCustomSkin.MAYOR.getProperty() : LGCustomSkin.VILLAGER.getProperty());
         }
     }
 
@@ -881,21 +908,23 @@ public class LGGame implements Listener {
 
         broadcastMessage(BLUE + "Il est temps de voter pour élire un " + DARK_PURPLE + BOLD + "Capitaine" + BLUE + ".", true);
         LGVote.builder(this, event.getCause())
-                       .hideViewersMessage(event.isHideViewersMessage())
-                       .randomIfEqual(true)
-                       .generator(
-                               (player, secondsLeft) ->
-                                       player.getCache().has("vote") ?
-                                               GOLD + "Tu votes pour " + GRAY + BOLD + player.getCache().<LGPlayer> get("vote").getName() :
-                                               GOLD + "Il te reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter")
-                       .build()
-                .start(getAlive(), getInGame(), () -> {
-                    if (vote.getChoosen() == null) setMayor(getAlive().get(random.nextInt(getAlive().size())));
-                    else setMayor(vote.getChoosen());
+                .hideViewersMessage(event.isHideViewersMessage())
+                .randomIfEqual(true)
+                .generator(
+                        (player, secondsLeft) ->
+                                player.getCache().has("vote") ?
+                                        GOLD + "Tu votes pour " + GRAY + BOLD + player.getCache().<LGPlayer> get("vote").getName() :
+                                        GOLD + "Il te reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter")
+                .build()
+                .start(
+                        getAlive(), getInGame(), () -> {
+                            if (vote.getChoosen() == null) setMayor(getAlive().get(random.nextInt(getAlive().size())));
+                            else setMayor(vote.getChoosen());
 
-                    broadcastMessage(GRAY + BOLD + mayor.getName() + GOLD + " devient le " + DARK_PURPLE + BOLD + "Capitaine " + GOLD + "du village.", true);
-                    peopleVote();
-                });
+                            broadcastMessage(GRAY + BOLD + mayor.getName() + GOLD + " devient le " + DARK_PURPLE + BOLD + "Capitaine " + GOLD + "du village.", true);
+                            peopleVote();
+                        }
+                );
     }
 
     @EventHandler
@@ -921,33 +950,37 @@ public class LGGame implements Listener {
         isPeopleVote = true;
 
         LGVote.builder(this, event.getCause())
-                       .hideViewersMessage(event.isHideViewersMessage())
-                       .allowBlankVote(true)
-                       .generator((player, secondsLeft) -> {
-                           LGPlayer voted = player.getCache().get("vote");
+                .hideViewersMessage(event.isHideViewersMessage())
+                .allowBlankVote(true)
+                .generator((player, secondsLeft) -> {
+                    LGPlayer voted = player.getCache().get("vote");
 
-                           if (voted == null)
-                               return GOLD + "Il te reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter";
+                    if (voted == null)
+                        return GOLD + "Il te reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter";
 
-                           if (voted == LGVote.getBlank())
-                               return GOLD + "Tu votes blanc";
+                    if (voted == LGVote.getBlank())
+                        return GOLD + "Tu votes blanc";
 
-                           return GOLD + "Tu votes pour " + GRAY + BOLD + voted.getName();
-                       })
-                       .build()
-                .start(getAlive(), getInGame(), () -> {
-                    isPeopleVote = false;
-                    if (vote.getChoosen() == null || (vote.isMayorVote() && getMayor() == null))
-                        broadcastMessage(BLUE + "Personne n'est mort aujourd'hui.", true);
-                    else {
-                        LGPlayerKilledEvent killEvent = new LGPlayerKilledEvent(this, vote.getChoosen(), Reason.VOTE);
-                        Bukkit.getPluginManager().callEvent(killEvent);
+                    return GOLD + "Tu votes pour " + GRAY + BOLD + voted.getName();
+                })
+                .build()
+                .start(
+                        getAlive(),
+                        getInGame(),
+                        () -> {
+                            isPeopleVote = false;
+                            if (vote.getChoosen() == null || (vote.isMayorVote() && getMayor() == null))
+                                broadcastMessage(BLUE + "Personne n'est mort aujourd'hui.", true);
+                            else {
+                                LGPlayerKilledEvent killEvent = new LGPlayerKilledEvent(this, vote.getChoosen(), Reason.VOTE);
+                                Bukkit.getPluginManager().callEvent(killEvent);
 
-                        if (!killEvent.isCancelled())
-                            kill(killEvent.getKilled(), killEvent.getReason(), true);
-                    }
-                    nextNight();
-                }, mayor);
+                                if (!killEvent.isCancelled())
+                                    kill(killEvent.getKilled(), killEvent.getReason(), true);
+                            }
+                            nextNight();
+                        }, mayor
+                );
     }
 
     public boolean checkEndGame() {
@@ -955,7 +988,7 @@ public class LGGame implements Listener {
     }
 
     public boolean checkEndGame(boolean doEndGame) {
-        LGWinType winType = LGWinType.NONE;
+        LGWinType                 winType          = LGWinType.NONE;
         Map<RoleWinType, Integer> roleWinTypeAlive = new HashMap<>();
 
         if (getAlive().size() > 0) {
@@ -968,7 +1001,7 @@ public class LGGame implements Listener {
                 RoleWinType roleWinType = roleWinTypeAlive.keySet().iterator().next();
 
                 if (!roleWinType.equals(RoleWinType.SOLO) ||
-                    (roleWinType.equals(RoleWinType.SOLO) && roleWinTypeAlive.getOrDefault(RoleWinType.SOLO, 0) == 1))
+                            (roleWinType.equals(RoleWinType.SOLO) && roleWinTypeAlive.getOrDefault(RoleWinType.SOLO, 0) == 1))
                     winType = roleWinType.getWinType();
             }
         }
