@@ -26,7 +26,6 @@ import org.bukkit.inventory.ItemStack;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static fr.valgrifer.loupgarou.utils.ChatColorQuick.*;
@@ -65,7 +64,7 @@ public class RPuppeteer extends Role implements Listener {
     public RPuppeteer(LGGame game) {
         super(game);
 
-        this.chat = new LGChat(game, LGChatType.LITTLE_GIRL) {
+        this.chat = new LGChat(game, LGChatType.SPY) {
             @Override
             public String receive(@Nonnull InterlocutorContext context, @Nonnull String message) {
                 return context.getChat().receive(context, message);
