@@ -3,6 +3,7 @@ package fr.valgrifer.loupgarou;
 import com.comphenix.protocol.ProtocolLibrary;
 import fr.valgrifer.loupgarou.classes.*;
 import fr.valgrifer.loupgarou.inventory.ItemBuilder;
+import fr.valgrifer.loupgarou.inventory.LGInventoryHolder;
 import fr.valgrifer.loupgarou.listeners.*;
 import fr.valgrifer.loupgarou.roles.*;
 import fr.valgrifer.loupgarou.utils.VariousUtils;
@@ -159,6 +160,23 @@ public class MainLg extends JavaPlugin {
 
             if (canOpen) ((Player) sender).openInventory(SpecManager.getMainSpecManager().getInventory());
             else lgp.sendMessage(DARK_RED + "Erreur: " + RED + "La Commande vous à étais bloqué");
+            return true;
+        }
+        else if (command.getName().equalsIgnoreCase("roles")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage(DARK_RED + "Erreur: " + RED + "Vous n'êtes pas un joueur");
+                return true;
+            }
+            LGPlayer lgp = LGPlayer.get((Player) sender);
+
+            if (lgp.getGame() == null) return true;
+
+            lgp.getPlayer().openInventory(lgp.getCache().computeIfAbsent("rolesHelper", () -> {
+                LGInventoryHolder inventory = new LGInventoryHolder(6, GREEN + "Rôles");
+                inventory.setDefaultPreset(new LGRolePreset(inventory));
+                return inventory;
+            }).getInventory());
+
             return true;
         }
         return false;

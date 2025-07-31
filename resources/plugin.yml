@@ -16,3 +16,6 @@ commands:
   spec:
     description: spec command
     usage: /spec
+  roles:
+    description: watch all roles
+    usage: /roles
