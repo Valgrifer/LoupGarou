@@ -266,6 +266,7 @@ public class MainLg extends JavaPlugin {
             addRole(RWolfFelt.class, getResource("roles/feltwerewolf.png"));
             addRole(RFox.class, getResource("roles/fox.png"));
             addRole(RPuppeteer.class, getResource("roles/lelouch.png"));
+            addRole(RTwinGirls.class, getResource("roles/twingirls.png"));
 
             addBlackListSpecRole(RMedium.class);
             addBlackListSpecRole(RPriest.class);

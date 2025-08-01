@@ -86,14 +86,13 @@ public class LoveListener implements Listener {
     public void onLGRoleTurnEnd(LGRoleTurnEndEvent event)
     {
         if (event.getNewRole() instanceof RWereWolf)
-            event.getGame().getAlive().stream()
-                    .filter(lgp -> lgp.getCache().has(loveKey))
+            event.getGame()
+                    .getAlive(lgp -> lgp.getCache().has(loveKey))
                     .forEach(LGPlayer::leaveChat);
-
-        if (event.getPreviousRole() instanceof RWereWolf)
-            event.getGame().getAlive().stream()
-                    .filter(lgp -> lgp.getCache().has(loveKey))
-                    .forEach(lgp -> lgp.joinChat(event.getGame().getChat(LGChatType.LOVE)));
+        else
+            event.getGame()
+                    .getAlive(lgp -> lgp.getCache().has(loveKey))
+                    .forEach(player -> player.joinChat(event.getGame().getChat(LGChatType.LOVE)));
     }
 
 }
