@@ -234,7 +234,7 @@ public class MainLg extends JavaPlugin {
             addRole(RHunter.class, getResource("roles/hunter.png"));
             addRole(RVillager.class, getResource("roles/villager.png"));
             addRole(RVillagerVillager.class, getResource("roles/villager.png"));
-            addRole(RMedium.class, getResource("roles/medium.png"));
+//            addRole(RMedium.class, getResource("roles/medium.png"));
             addRole(RDictator.class, getResource("roles/dictator.png"));
             addRole(RCupid.class, getResource("roles/cupid.png"));
             addRole(RLittleGirl.class, getResource("roles/littlegirl.png"));

@@ -85,19 +85,21 @@ public class LGGame implements Listener {
     @Getter
     private LGVote vote;
 
+    @Getter
+    private LGChat spectatorChat = new LGChat(this, LGChatType.SPEC) {
+        @Override
+        public String receive(@Nonnull InterlocutorContext context, @Nonnull String message) {
+            if (!context.getChat().equals(this))
+                return context.getChat().receive(context, message);
+
+            return GRAY + context.getInterlocutor().getName() + " " + GOLD + "» " + WHITE + message;
+        }
+    };
+
     public LGGame(int maxPlayers) {
         this.maxPlayers = maxPlayers;
         Bukkit.getPluginManager().registerEvents(this, MainLg.getInstance());
 
-        LGChat spectatorChat = new LGChat(this, LGChatType.SPEC) {
-            @Override
-            public String receive(@Nonnull InterlocutorContext context, @Nonnull String message) {
-                if (!context.getChat().equals(this))
-                    return context.getChat().receive(context, message);
-
-                return GRAY + context.getInterlocutor().getName() + " " + GOLD + "» " + WHITE + message;
-            }
-        };
         LGChat dayChat = new LGChat(this, LGChatType.VILLAGE) {
             @Override
             public String receive(@Nonnull InterlocutorContext context, @Nonnull String message) {
@@ -107,13 +109,15 @@ public class LGGame implements Listener {
 
         new LGNoChat(this);
 
-        dayChat.join(spectatorChat);
     }
 
     public void registerChat(@Nonnull LGChat chat) {
         if (this.chat.containsKey(chat.getType()))
             throw new IllegalArgumentException("Chat already registered");
         this.chat.put(chat.getType(), chat);
+
+        if (chat.getType() != LGChatType.SPEC && chat.getType() != LGChatType.NOCHAT)
+            chat.join(spectatorChat);
     }
 
     public LGChat getChat(@Nonnull LGChatType type) {
