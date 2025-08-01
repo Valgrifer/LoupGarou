@@ -64,7 +64,7 @@ public class LGVote
     @Getter
     private LGPlayer choosen = null;
     private int timeout;
-    private Runnable callback;
+    private VoteEndRunnable callback;
     @Getter
     private List<LGPlayer> participants, viewers;
     private int votesSize = 0;
@@ -102,7 +102,7 @@ public class LGVote
         Bukkit.getPluginManager().callEvent(new LGVoteStartEvent(game, this, cause));
     }
 
-    public void start(List<LGPlayer> participants, List<LGPlayer> viewers, Runnable callback)
+    public void start(List<LGPlayer> participants, List<LGPlayer> viewers, VoteEndRunnable callback)
     {
         this.callback = callback;
         this.participants = participants;
@@ -122,13 +122,13 @@ public class LGVote
         }
     }
 
-    public void start(List<LGPlayer> participants, List<LGPlayer> viewers, Runnable callback, ArrayList<LGPlayer> blacklisted)
+    public void start(List<LGPlayer> participants, List<LGPlayer> viewers, VoteEndRunnable callback, ArrayList<LGPlayer> blacklisted)
     {
         this.blacklisted = blacklisted;
         this.start(participants, viewers, callback);
     }
 
-    public void start(List<LGPlayer> participants, List<LGPlayer> viewers, Runnable callback, LGPlayer mayor)
+    public void start(List<LGPlayer> participants, List<LGPlayer> viewers, VoteEndRunnable callback, LGPlayer mayor)
     {
         this.mayor = mayor;
         this.start(participants, viewers, callback);
@@ -218,12 +218,12 @@ public class LGVote
             game.cancelWait();
             _end();
         }
-        game.setVote(null);
     }
 
     private void _end() {
         Bukkit.getPluginManager().callEvent(new LGVoteEndEvent(game, this, getCause()));
-        callback.run();
+        game.setVote(null);
+        callback.run(this);
     }
 
     public List<LGPlayer> getBlacklisted() {
@@ -327,7 +327,7 @@ public class LGVote
     private void updateVotes(LGPlayer voted, boolean kill)
     {
         Integer entityId = null;
-        if (!voted.isFakePlayer())
+        if (!voted.isFakePlayer() && voted.getPlayer() != null)
         {
             entityId = Integer.MIN_VALUE + voted.getPlayer().getEntityId();
             WrapperPlayServerEntityDestroy destroy = new WrapperPlayServerEntityDestroy();
@@ -573,5 +573,9 @@ public class LGVote
         {
             return new LGVote(game, cause, timeout, littleTimeout, hideViewersMessage, randomIfEqual, blankVote, generator);
         }
+    }
+
+    public interface VoteEndRunnable {
+        void run(LGVote vote);
     }
 }

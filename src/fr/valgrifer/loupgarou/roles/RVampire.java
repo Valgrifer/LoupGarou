@@ -29,7 +29,6 @@ public class RVampire extends Role implements CampTeam {
     @Getter
     private final List<LGPlayer> fakePlayers = new ArrayList<>();
     int nextCanInfect = 0;
-    LGVote vote;
 
     public RVampire(LGGame game) {
         super(game);
@@ -56,10 +55,10 @@ public class RVampire extends Role implements CampTeam {
 
     public static String _getDescription() {
         return _getShortDescription() + WHITE + ". Chaque nuit, tu te réunis avec tes compères pour décider d'une victime à transformer en " +
-            RoleWinType.VAMPIRE.getColoredName(BOLD) + WHITE + "... Lorsqu'une transformation a lieu, tous les " +
-            RoleWinType.VAMPIRE.getColoredName(BOLD) + WHITE +
-            " doivent se reposer la nuit suivante. Un joueur transformé perd tous les pouvoirs liés à son ancien rôle, et gagne avec les " +
-            RoleWinType.VAMPIRE.getColoredName(BOLD) + WHITE + ".";
+                       RoleWinType.VAMPIRE.getColoredName(BOLD) + WHITE + "... Lorsqu'une transformation a lieu, tous les " +
+                       RoleWinType.VAMPIRE.getColoredName(BOLD) + WHITE +
+                       " doivent se reposer la nuit suivante. Un joueur transformé perd tous les pouvoirs liés à son ancien rôle, et gagne avec les " +
+                       RoleWinType.VAMPIRE.getColoredName(BOLD) + WHITE + ".";
     }
 
     public static String _getTask() {
@@ -110,15 +109,15 @@ public class RVampire extends Role implements CampTeam {
     @Override
     public boolean addAllHiddenPlayer(List<LGPlayer> players) {
         return hiddenPlayers.addAll(players.stream()
-            .filter(player -> getPlayers().contains(player) && !hiddenPlayers.contains(player))
-            .collect(Collectors.toCollection(ArrayList::new)));
+                                            .filter(player -> getPlayers().contains(player) && !hiddenPlayers.contains(player))
+                                            .collect(Collectors.toCollection(ArrayList::new)));
     }
 
     @Override
     public boolean removeAllHiddenPlayer(List<LGPlayer> players) {
         return hiddenPlayers.removeAll(players.stream()
-            .filter(player -> getPlayers().contains(player) && hiddenPlayers.contains(player))
-            .collect(Collectors.toCollection(ArrayList::new)));
+                                               .filter(player -> getPlayers().contains(player) && hiddenPlayers.contains(player))
+                                               .collect(Collectors.toCollection(ArrayList::new)));
     }
 
     @Override
@@ -136,15 +135,15 @@ public class RVampire extends Role implements CampTeam {
     @Override
     public boolean addAllFakePlayer(List<LGPlayer> players) {
         return fakePlayers.addAll(players.stream()
-            .filter(player -> !getPlayers().contains(player) && !fakePlayers.contains(player))
-            .collect(Collectors.toCollection(ArrayList::new)));
+                                          .filter(player -> !getPlayers().contains(player) && !fakePlayers.contains(player))
+                                          .collect(Collectors.toCollection(ArrayList::new)));
     }
 
     @Override
     public boolean removeAllFakePlayer(List<LGPlayer> players) {
         return fakePlayers.removeAll(players.stream()
-            .filter(player -> !getPlayers().contains(player) && fakePlayers.contains(player))
-            .collect(Collectors.toCollection(ArrayList::new)));
+                                             .filter(player -> !getPlayers().contains(player) && fakePlayers.contains(player))
+                                             .collect(Collectors.toCollection(ArrayList::new)));
     }
 
     @Override
@@ -166,20 +165,6 @@ public class RVampire extends Role implements CampTeam {
             return;
         }
 
-        vote = LGVote.builder(getGame(), event.getCause())
-                       .timeout(getTimeout())
-                       .littleTimeout(getTimeout() / 3)
-                       .hideViewersMessage(event.isHideViewersMessage())
-                       .randomIfEqual(false)
-                       .generator(
-                               (player, secondsLeft) ->
-                                       !getPlayers().contains(player) ?
-                                               GOLD + "C'est au tour " + getFriendlyName() + " " + GOLD + "(" + YELLOW + secondsLeft + " s" + GOLD + ")" :
-                                               player.getCache().has("vote") ?
-                                                       BOLD + BLUE + "Vous votez pour " + RED + BOLD + player.getCache().<LGPlayer> get("vote").getName() :
-                                                       GOLD + "Il vous reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter")
-                       .build();
-
         for (LGPlayer lgp : getGame().getAlive())
             if (lgp.getRoleType() == RoleType.VAMPIRE) lgp.showView();
         for (LGPlayer player : getPlayers()) {
@@ -187,13 +172,31 @@ public class RVampire extends Role implements CampTeam {
             //	player.sendTitle(GOLD+"C'est à vous de jouer", GREEN+getTask(), 100);
             player.joinChat(chat);
         }
-        vote.start(getPlayers(), getPlayers(), () -> {
-            onNightTurnEnd();
-            callback.run();
-        }, getPlayers());
+
+        LGVote.builder(getGame(), event.getCause())
+                .timeout(getTimeout())
+                .littleTimeout(getTimeout() / 3)
+                .hideViewersMessage(event.isHideViewersMessage())
+                .randomIfEqual(false)
+                .generator(
+                        (player, secondsLeft) ->
+                                !getPlayers().contains(player) ?
+                                        GOLD + "C'est au tour " + getFriendlyName() + " " + GOLD + "(" + YELLOW + secondsLeft + " s" + GOLD + ")" :
+                                        player.getCache().has("vote") ?
+                                                BOLD + BLUE + "Vous votez pour " + RED + BOLD + player.getCache().<LGPlayer> get("vote").getName() :
+                                                GOLD + "Il vous reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter")
+                .build()
+                .start(
+                        getPlayers(),
+                        getPlayers(),
+                        vote -> {
+                            onNightTurnEnd(vote);
+                            callback.run();
+                        }, getPlayers()
+                );
     }
 
-    private void onNightTurnEnd() {
+    private void onNightTurnEnd(LGVote vote) {
         for (LGPlayer lgp : getGame().getAlive())
             if (lgp.getRoleType() == RoleType.VAMPIRE) lgp.hideView();
         for (LGPlayer player : getPlayers())
@@ -202,7 +205,7 @@ public class RVampire extends Role implements CampTeam {
         LGPlayer choosen = vote.getChoosen();
         if (choosen == null) {
             if (!vote.getVotes().isEmpty()) {
-                int max = 0;
+                int     max   = 0;
                 boolean equal = false;
                 for (Entry<LGPlayer, List<LGPlayer>> entry : vote.getVotes().entrySet())
                     if (entry.getValue().size() > max) {
@@ -250,14 +253,14 @@ public class RVampire extends Role implements CampTeam {
 
             for (LGPlayer player : getPlayers())
                 player.sendMessage(
-                    GRAY + BOLD + action.getTarget().getName() + " s'est transformé en " + DARK_PURPLE + BOLD + "Vampire" + GOLD + ".");
+                        GRAY + BOLD + action.getTarget().getName() + " s'est transformé en " + DARK_PURPLE + BOLD + "Vampire" + GOLD + ".");
 
             if (!action.isForceMessage()) {
                 action.getTarget()
-                    .sendMessage(
-                        GOLD + "Tu as été infecté par les " + DARK_PURPLE + BOLD + "Vampires " + GOLD + "pendant la nuit. Tu as perdu tes pouvoirs.");
+                        .sendMessage(
+                                GOLD + "Tu as été infecté par les " + DARK_PURPLE + BOLD + "Vampires " + GOLD + "pendant la nuit. Tu as perdu tes pouvoirs.");
                 action.getTarget()
-                    .sendMessage(GOLD + ITALIC + "Tu gagnes désormais avec les " + DARK_PURPLE + BOLD + ITALIC + "Vampires" + GOLD + ITALIC + ".");
+                        .sendMessage(GOLD + ITALIC + "Tu gagnes désormais avec les " + DARK_PURPLE + BOLD + ITALIC + "Vampires" + GOLD + ITALIC + ".");
                 action.getTarget().setRoleWinType(RoleWinType.VAMPIRE);
                 action.getTarget().setRoleType(RoleType.VAMPIRE);
                 action.getTarget().setRoleActive(false);
@@ -316,8 +319,7 @@ public class RVampire extends Role implements CampTeam {
         if (e.getGame() == getGame()) if (e.getPlayer().getCache().getBoolean("vampire")) e.getConstraints().add(Constraint.VAMPIRED);
     }
 
-    public static class VampiredAction implements LGRoleActionEvent.RoleAction, TakeTarget, MessageForced
-    {
+    public static class VampiredAction implements LGRoleActionEvent.RoleAction, TakeTarget, MessageForced {
         @Getter
         @Setter
         private boolean immuned, protect;
@@ -327,6 +329,7 @@ public class RVampire extends Role implements CampTeam {
         @Getter
         @Setter
         private boolean forceMessage;
+
         public VampiredAction(LGPlayer target) {
             this.target = target;
         }

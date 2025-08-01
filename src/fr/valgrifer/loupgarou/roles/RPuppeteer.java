@@ -25,7 +25,6 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,6 +36,7 @@ public class RPuppeteer extends Role implements Listener {
     private static final int PowerDefault = 2;
 
     public static final String PuppetKey = "puppet";
+    public static final String PuppetTargetableKey = "puppet_targetable";
     public static final String PuppetTargetKey = "puppet_target";
     private static final int PuppetTime = 2;
 
@@ -59,13 +59,10 @@ public class RPuppeteer extends Role implements Listener {
 
     private LGVote vote = null;
 
-    private List<LGPlayer> previousTargets = null;
-    private List<LGPlayer> targets = new ArrayList<>();
-
     public RPuppeteer(LGGame game) {
         super(game);
 
-        this.chat = new LGChat(game, LGChatType.SPY) {
+        this.chat = new LGChat(game, LGChatType.LELOUCH) {
             @Override
             public String receive(@Nonnull InterlocutorContext context, @Nonnull String message) {
                 return context.getChat().receive(context, message);
@@ -171,7 +168,7 @@ public class RPuppeteer extends Role implements Listener {
                 action.getVoter().setCanChoose(false);
                 action.getVoter().getCache().set(PuppetKey, PuppetTime);
                 action.getVoter().sendMessage(RED + "Vous êtes manipulé par " + _getFriendlyName() + RESET + RED + ".");
-                action.getVoted().getCache().get(PuppetTargetKey, true);
+                action.getVoted().getCache().set(PuppetTargetKey, true);
 
                 Player plv = action.getVoter().getPlayer();
 
@@ -254,44 +251,50 @@ public class RPuppeteer extends Role implements Listener {
         wereWolf.getChat().join(this.getChat());
     }
 
-    @EventHandler
-    public void onNightEnd(LGNightEndEvent event) {
-        if (event.getGame() != getGame()) return;
 
-        this.previousTargets = this.targets;
-        this.targets = new ArrayList<>();
-    }
-
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerKilled(LGPlayerKilledEvent event) {
         if (event.getGame() != getGame()) return;
 
         if (event.getKilled() == null) return;
 
-        if (event.isCancelled()) {
-            if (event.getReason() == LGPlayerKilledEvent.Reason.LOUP_GAROU || event.getReason() == LGPlayerKilledEvent.Reason.GM_LOUP_GAROU)
-                targets.add(event.getKilled());
-        }
-        else {
-            if (event.getKilled().getRole() instanceof RPuppeteer) {
-                event.getKilled().getPlayer().getInventory().setItem(8, null);
-                event.getKilled().getPlayer().closeInventory();
-            }
 
-            if (this.previousTargets.contains(event.getKilled()) &&
-                        event.getKilled().getCache().getBoolean(PuppetTargetKey) &&
-                        (event.getReason() == LGPlayerKilledEvent.Reason.LOUP_GAROU ||
-                        event.getReason() == LGPlayerKilledEvent.Reason.VOTE))
-                getPlayers()
-                        .stream()
-                        .filter(LGPlayer::isRoleActive)
-                        .forEach(lgp -> {
-                            lgp.getCache().set(PowerCountKey, lgp.getCache().get(PowerCountKey, 0) + 1);
-                            lgp.sendMessage(DARK_AQUA + "Votre pouvoir se renforce.");
-                        });
+        if (event.isCancelled()) return;
+
+        if (event.getKilled().getRole() instanceof RPuppeteer) {
+            event.getKilled().getPlayer().getInventory().setItem(8, null);
+            event.getKilled().getPlayer().closeInventory();
         }
+
+        if ((event.getKilled().getCache().get(PuppetTargetableKey, 0) > 0 || getGame().getMayor() == event.getKilled()) &&
+                    event.getKilled().getCache().getBoolean(PuppetTargetKey) &&
+                    (event.getReason() == LGPlayerKilledEvent.Reason.LOUP_GAROU ||
+                             event.getReason() == LGPlayerKilledEvent.Reason.VOTE))
+
+            getPlayers()
+                    .stream()
+                    .filter(LGPlayer::isRoleActive)
+                    .forEach(lgp -> {
+                        lgp.getCache().set(PowerCountKey, lgp.getCache().get(PowerCountKey, 0) + 1);
+                        lgp.sendMessage(DARK_AQUA + "Votre pouvoir se renforce.");
+                    });
     }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onNightPlayerPreKilled(LGNightPlayerPreKilledEvent event) {
+        if (event.getGame() != getGame()) return;
+
+        if (event.getKilled() == null) return;
+
+        if (!event.isCancelled())
+            return;
+
+        if (event.getReason() != LGPlayerKilledEvent.Reason.LOUP_GAROU && event.getReason() != LGPlayerKilledEvent.Reason.GM_LOUP_GAROU)
+            return;
+
+        event.getKilled().getCache().set(PuppetTargetableKey, 2);
+    }
+
 
     @EventHandler
     public void onRoleTurnEnd(LGRoleTurnEndEvent event) {
@@ -305,6 +308,7 @@ public class RPuppeteer extends Role implements Listener {
                         player.showView();
                         player.joinChat(this.getChat(), true);
                     });
+
         if (event.getPreviousRole() instanceof RWereWolf)
             this.getPlayers()
                     .stream()
@@ -322,9 +326,6 @@ public class RPuppeteer extends Role implements Listener {
 
         vote = event.getVote();
 
-        if (getGame().getMayor() != null)
-            targets.add(getGame().getMayor());
-
         getGame().getInGame()
                 .stream()
                 .filter(lgp -> lgp.getCache().get(PuppetKey, 0) > 0)
@@ -332,11 +333,15 @@ public class RPuppeteer extends Role implements Listener {
 
         getPlayers()
                 .stream()
-                .filter(LGPlayer::isRoleActive)
+                .filter(player -> !player.getCache().getBoolean("infected") && player.isRoleActive())
                 .forEach(player -> {
                     player.getCache().set(PowerFreeUse, true);
                     player.sendMessage(DARK_AQUA + "Votre utilisation gratuit vous a été attribué.");
-                    List<String> targets = this.targets.stream().filter(lgp -> lgp != player).map(LGPlayer::getName).collect(Collectors.toList());
+                    List<String> targets = this.getGame()
+                                                   .getAlive(lgp -> lgp != player && (lgp.getCache().get(PuppetTargetableKey, 0) > 0 || getGame().getMayor() == lgp))
+                                                   .stream()
+                                                   .map(LGPlayer::getName)
+                                                   .collect(Collectors.toList());
                     if (!targets.isEmpty())
                         player.sendMessage(DARK_AQUA + String.format("Si %s meurs du vote, votre pouvoir se renforcera.", VariousUtils.frenchFormatList(targets, "ou")));
                     player.getPlayer().getInventory().setItem(8, PuppeteerItem);
@@ -348,6 +353,11 @@ public class RPuppeteer extends Role implements Listener {
         if (event.getGame() != getGame()) return;
 
         vote = null;
+
+        getGame().getInGame()
+                .stream()
+                .filter(lgp -> lgp.getCache().get(PuppetTargetableKey, 0) > 0)
+                .forEach(lgp -> lgp.getCache().set(PuppetTargetableKey, lgp.getCache().get(PuppetTargetableKey, 0) - 1));
 
         getPlayers().forEach(player -> {
             player.getCache().set(PowerFreeUse, false);

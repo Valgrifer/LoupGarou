@@ -115,9 +115,6 @@ public class VariousUtils {
         return result.toString();
     }
 
-    public static String frenchFormatList(List<String> list) {
-        return frenchFormatList(list, "et ");
-    }
     public static String frenchFormatList(List<String> list, String lastJoiner) {
         if (list == null || list.isEmpty()) return "";
 
@@ -125,7 +122,9 @@ public class VariousUtils {
         for (int i = 0; i < list.size() - 1; i++) {
             sb.append(list.get(i)).append(", ");
         }
-        sb.append(lastJoiner).append(" ").append(list.get(list.size() - 1));
+        if (sb.length() > 0)
+            sb.append(lastJoiner).append(" ");
+        sb.append(list.get(list.size() - 1));
         return sb.toString();
     }
 

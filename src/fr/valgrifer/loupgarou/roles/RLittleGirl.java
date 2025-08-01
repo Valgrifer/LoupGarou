@@ -32,7 +32,7 @@ public class RLittleGirl extends Role implements Listener
     public RLittleGirl(LGGame game) {
         super(game);
 
-        this.chat = new LGChat(game, LGChatType.SPY) {
+        this.chat = new LGChat(game, LGChatType.LITTLE_GIRL) {
             final Map<String, String> mapName = new HashMap<>();
 
             public String getCustomName(Interlocutor from) {

@@ -89,7 +89,7 @@ public class RFox extends Role {
                 Bukkit.getPluginManager().callEvent(event);
             });
 
-            String ppl = VariousUtils.frenchFormatList(targets.stream().map(action -> action.getTarget().getName()).collect(Collectors.toList()));
+            String ppl = VariousUtils.frenchFormatList(targets.stream().map(action -> action.getTarget().getName()).collect(Collectors.toList()), "et");
 
             boolean foundLG = targets.stream().anyMatch(action -> action.isLG() || action.isForceMessage());
 

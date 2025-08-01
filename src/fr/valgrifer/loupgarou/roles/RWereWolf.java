@@ -27,7 +27,6 @@ public class RWereWolf extends Role implements CampTeam {
     @Getter
     private final List<LGPlayer> fakePlayers = new ArrayList<>();
     boolean showSkins = false;
-    LGVote vote;
 
     public RWereWolf(LGGame game) {
         super(game);
@@ -109,15 +108,15 @@ public class RWereWolf extends Role implements CampTeam {
     @Override
     public boolean addAllHiddenPlayer(List<LGPlayer> players) {
         return hiddenPlayers.addAll(players.stream()
-            .filter(player -> getPlayers().contains(player) && !hiddenPlayers.contains(player))
-            .collect(Collectors.toCollection(ArrayList::new)));
+                                            .filter(player -> getPlayers().contains(player) && !hiddenPlayers.contains(player))
+                                            .collect(Collectors.toCollection(ArrayList::new)));
     }
 
     @Override
     public boolean removeAllHiddenPlayer(List<LGPlayer> players) {
         return hiddenPlayers.removeAll(players.stream()
-            .filter(player -> getPlayers().contains(player) && hiddenPlayers.contains(player))
-            .collect(Collectors.toCollection(ArrayList::new)));
+                                               .filter(player -> getPlayers().contains(player) && hiddenPlayers.contains(player))
+                                               .collect(Collectors.toCollection(ArrayList::new)));
     }
 
     @Override
@@ -135,15 +134,15 @@ public class RWereWolf extends Role implements CampTeam {
     @Override
     public boolean addAllFakePlayer(List<LGPlayer> players) {
         return fakePlayers.addAll(players.stream()
-            .filter(player -> !getPlayers().contains(player) && !fakePlayers.contains(player))
-            .collect(Collectors.toCollection(ArrayList::new)));
+                                          .filter(player -> !getPlayers().contains(player) && !fakePlayers.contains(player))
+                                          .collect(Collectors.toCollection(ArrayList::new)));
     }
 
     @Override
     public boolean removeAllFakePlayer(List<LGPlayer> players) {
         return fakePlayers.removeAll(players.stream()
-            .filter(player -> !getPlayers().contains(player) && fakePlayers.contains(player))
-            .collect(Collectors.toCollection(ArrayList::new)));
+                                             .filter(player -> !getPlayers().contains(player) && fakePlayers.contains(player))
+                                             .collect(Collectors.toCollection(ArrayList::new)));
     }
 
     @Override
@@ -165,33 +164,38 @@ public class RWereWolf extends Role implements CampTeam {
             return;
         }
 
-        vote = LGVote.builder(getGame(), event.getCause())
-                       .timeout(getTimeout())
-                       .littleTimeout(getTimeout() / 3)
-                       .hideViewersMessage(event.isHideViewersMessage())
-                       .randomIfEqual(false)
-                       .generator(
-                               (player, secondsLeft) ->
-                                       !getPlayers().contains(player) ?
-                                               GOLD + "C'est au tour " + getFriendlyName() + " " + GOLD + "(" + YELLOW + secondsLeft + " s" + GOLD + ")" :
-                                               player.getCache().has("vote") ?
-                                                       BOLD + BLUE + "Vous votez contre " + RED + BOLD + player.getCache().<LGPlayer> get("vote").getName() :
-                                                       GOLD + "Il vous reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter")
-                       .build();
-
         for (LGPlayer player : getPlayers()) {
             player.sendMessage(GOLD + getTask());
             player.showView();
             //	player.sendTitle(GOLD+"C'est à vous de jouer", GREEN+getTask(), 100);
             player.joinChat(this.getChat());
+
         }
-        vote.start(getPlayers(), getPlayers(), () -> {
-            onNightTurnEnd();
-            callback.run();
-        });
+
+        LGVote.builder(getGame(), event.getCause())
+                .timeout(getTimeout())
+                .littleTimeout(getTimeout() / 3)
+                .hideViewersMessage(event.isHideViewersMessage())
+                .randomIfEqual(false)
+                .generator(
+                        (player, secondsLeft) ->
+                                !getPlayers().contains(player) ?
+                                        GOLD + "C'est au tour " + getFriendlyName() + " " + GOLD + "(" + YELLOW + secondsLeft + " s" + GOLD + ")" :
+                                        player.getCache().has("vote") ?
+                                                BOLD + BLUE + "Vous votez contre " + RED + BOLD + player.getCache().<LGPlayer> get("vote").getName() :
+                                                GOLD + "Il vous reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter")
+                .build()
+                .start(
+                        getPlayers(),
+                        getPlayers(),
+                        vote -> {
+                            onNightTurnEnd(vote);
+                            callback.run();
+                        }
+                );
     }
 
-    private void onNightTurnEnd() {
+    private void onNightTurnEnd(LGVote vote) {
         for (LGPlayer player : getPlayers()) {
             player.hideView();
             player.leaveChat();
@@ -200,7 +204,7 @@ public class RWereWolf extends Role implements CampTeam {
         LGPlayer choosen = vote.getChoosen();
         if (choosen == null) {
             if (!vote.getVotes().isEmpty()) {
-                int max = 0;
+                int     max   = 0;
                 boolean equal = false;
                 for (Entry<LGPlayer, List<LGPlayer>> entry : vote.getVotes().entrySet())
                     if (entry.getValue().size() > max) {
@@ -222,7 +226,7 @@ public class RWereWolf extends Role implements CampTeam {
             getGame().kill(choosen, Reason.LOUP_GAROU);
             for (LGPlayer player : getPlayers())
                 player.sendMessage(
-                    GOLD + "Les " + RED + BOLD + "Loups" + GOLD + " ont décidé de tuer " + GRAY + BOLD + choosen.getName() + GOLD + ".");
+                        GOLD + "Les " + RED + BOLD + "Loups" + GOLD + " ont décidé de tuer " + GRAY + BOLD + choosen.getName() + GOLD + ".");
         }
         else for (LGPlayer player : getPlayers())
             player.sendMessage(GOLD + "Personne n'a été désigné pour mourir.");
@@ -239,7 +243,7 @@ public class RWereWolf extends Role implements CampTeam {
 
     @EventHandler
     public void onUpdatePrefix(LGUpdatePrefixEvent e) {
-//        System.out.printf("player: '%s', to: '%s', players contains: '%s', visible contains: '%s'%n", e.getPlayer().getName(), e.getTo().getName(), getVisiblePlayers().contains(e.getPlayer()), getPlayers().contains(e.getTo()));
+        //        System.out.printf("player: '%s', to: '%s', players contains: '%s', visible contains: '%s'%n", e.getPlayer().getName(), e.getTo().getName(), getVisiblePlayers().contains(e.getPlayer()), getPlayers().contains(e.getTo()));
         if (e.getGame() == getGame())
             if (getVisiblePlayers().contains(e.getPlayer()) && getPlayers().contains(e.getTo()))
                 e.setColorName(ChatColor.RED);

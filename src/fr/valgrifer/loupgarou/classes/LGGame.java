@@ -917,7 +917,7 @@ public class LGGame implements Listener {
                                         GOLD + "Il te reste " + YELLOW + secondsLeft + " seconde" + (secondsLeft > 1 ? "s" : "") + GOLD + " pour voter")
                 .build()
                 .start(
-                        getAlive(), getInGame(), () -> {
+                        getAlive(), getInGame(), vote -> {
                             if (vote.getChoosen() == null) setMayor(getAlive().get(random.nextInt(getAlive().size())));
                             else setMayor(vote.getChoosen());
 
@@ -967,7 +967,7 @@ public class LGGame implements Listener {
                 .start(
                         getAlive(),
                         getInGame(),
-                        () -> {
+                        vote -> {
                             isPeopleVote = false;
                             if (vote.getChoosen() == null || (vote.isMayorVote() && getMayor() == null))
                                 broadcastMessage(BLUE + "Personne n'est mort aujourd'hui.", true);

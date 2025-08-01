@@ -36,7 +36,7 @@ public class LGSpot {
     }
 
     public LGPlayer previousOf(int spot) {
-        return previousOf(spot - 1, null);
+        return previousOf(spot, null);
     }
     public LGPlayer previousOf(LGPlayer player) {
         return previousOf(this.indexOf(player), null);
