@@ -5,6 +5,7 @@ import fr.valgrifer.loupgarou.classes.LGPlayer;
 import fr.valgrifer.loupgarou.classes.LGWinType;
 import fr.valgrifer.loupgarou.classes.chat.LGChat;
 import fr.valgrifer.loupgarou.events.*;
+import fr.valgrifer.loupgarou.roles.RCupid;
 import fr.valgrifer.loupgarou.roles.RWereWolf;
 import fr.valgrifer.loupgarou.roles.RoleWinType;
 import org.bukkit.Bukkit;
@@ -87,11 +88,11 @@ public class LoveListener implements Listener {
     {
         if (event.getNewRole() instanceof RWereWolf)
             event.getGame()
-                    .getAlive(lgp -> lgp.getCache().has(loveKey))
+                    .getAlive(lgp -> lgp.getCache().has(loveKey) || lgp.getRole() instanceof RCupid)
                     .forEach(LGPlayer::leaveChat);
         else
             event.getGame()
-                    .getAlive(lgp -> lgp.getCache().has(loveKey))
+                    .getAlive(lgp -> lgp.getCache().has(loveKey) || lgp.getRole() instanceof RCupid)
                     .forEach(player -> player.joinChat(event.getGame().getChat(LGChatType.LOVE)));
     }
 
