@@ -134,10 +134,10 @@ public class GamePreset implements ConfigurationSerializable, Cloneable {
         }
 
         void deserialize(S value) {
-            this.value = this.key.serialize(value);
+            this.value = this.key.deserialize(value);
         }
         S serialize() {
-            return this.key.deserialize(this.value);
+            return this.key.serialize(this.value);
         }
     }
 }

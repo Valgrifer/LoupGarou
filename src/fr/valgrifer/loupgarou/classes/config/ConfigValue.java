@@ -32,8 +32,8 @@ public abstract class ConfigValue<S, D> {
 
     public abstract @NotNull String key();
     public abstract @NotNull D defaultValue();
-    public abstract @NotNull D serialize(@NotNull S value);
-    public abstract @NotNull S deserialize(@NotNull D value);
+    public abstract @NotNull D deserialize(@NotNull S value);
+    public abstract @NotNull S serialize(@NotNull D value);
 
     public static abstract class Single<T> extends ConfigValue<T, T> {
         public @NotNull T serialize(@NotNull T value) {

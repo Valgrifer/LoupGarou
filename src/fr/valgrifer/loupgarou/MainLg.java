@@ -79,13 +79,13 @@ public class MainLg extends JavaPlugin {
         loadRoles();
         saveDefaultConfig();
 
-        lgConfig = new LgConfig(this);
-
         registerResources();
     }
 
     @Override
     public void onEnable() {
+        lgConfig = new LgConfig(this);
+
         roles.sort(Comparator.comparing(Role::getName));
         roles = Collections.unmodifiableList(roles);
         notSelectableRoles = Collections.unmodifiableList(notSelectableRoles);

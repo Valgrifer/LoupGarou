@@ -1,4 +1,4 @@
-Settings dans le menu
+[x] Settings dans le menu
 
 Tous les role à selection, peuvent ce choice lui même et cut à tous moment
 

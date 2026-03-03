@@ -49,7 +49,7 @@ public class Composition extends ConfigValue<Map<String, Integer>, LgComposition
     }
 
     @Override
-    public @NotNull LgComposition serialize(@NotNull Map<String, Integer> value) {
+    public @NotNull LgComposition deserialize(@NotNull Map<String, Integer> value) {
         return new LgComposition(value.entrySet()
                                          .stream()
                                          .map(entry -> {
@@ -62,7 +62,7 @@ public class Composition extends ConfigValue<Map<String, Integer>, LgComposition
     }
 
     @Override
-    public @NotNull Map<String, Integer> deserialize(@NotNull LgComposition value) {
+    public @NotNull Map<String, Integer> serialize(@NotNull LgComposition value) {
         return value.getComposition()
                        .entrySet()
                        .stream()
