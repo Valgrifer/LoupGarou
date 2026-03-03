@@ -31,7 +31,7 @@ public abstract class ConfigValue<S, D> {
     }
 
     public abstract @NotNull String key();
-    public abstract D defaultValue();
+    public abstract @NotNull D defaultValue();
     public abstract @NotNull D serialize(@NotNull S value);
     public abstract @NotNull S deserialize(@NotNull D value);
 

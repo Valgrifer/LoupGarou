@@ -70,6 +70,8 @@ public class GamePreset implements ConfigurationSerializable, Cloneable {
 
         D value = key.defaultValue();
 
+        Validate.notNull(value);
+
         if (!VariousUtils.isPrimitive(value.getClass()))
             this.data.put(key.key(), new KeyValue<>(key, value));
 

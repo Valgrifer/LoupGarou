@@ -179,7 +179,7 @@ public class MainLg extends JavaPlugin {
                 newPreset.set(PresetName.KEY, name);
                 getLgConfig().save();
 
-                sender.sendMessage(GREEN + "Preset " + GOLD + name + GREEN + " !");
+                sender.sendMessage(GREEN + "Preset " + GOLD + name + GREEN + " sauvegardé !");
                 return true;
             }
             else if (args.length >= 1 && args[0].equalsIgnoreCase("debug")) {

@@ -30,7 +30,7 @@ public class PresetName extends ConfigValue.Single<String> {
     }
 
     @Override
-    public @Nullable String defaultValue() {
-        return null;
+    public @NotNull String defaultValue() {
+        return "null";
     }
 }
