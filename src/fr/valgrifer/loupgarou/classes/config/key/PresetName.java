@@ -33,4 +33,9 @@ public class PresetName extends ConfigValue.Single<String> {
     public @NotNull String defaultValue() {
         return "null";
     }
+
+
+    public String id(String name) {
+        return name.toLowerCase().replace(" ", "_");
+    }
 }

@@ -166,7 +166,7 @@ public class MainLg extends JavaPlugin {
 
                 String name = Stream.of(args).skip(1).collect(Collectors.joining(" "));
                 name = name.substring(0, Math.min(name.length(), 16));
-                String key = name.toLowerCase().replace(" ", "_");
+                String key = PresetName.KEY.id(name);
 
                 GamePreset current = getLgConfig().current().clone();
                 GamePreset newPreset = getLgConfig().preset(key);

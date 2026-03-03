@@ -305,13 +305,16 @@ public class ConfigManager extends LGInventoryHolder {
                                 .collect(Collectors.toUnmodifiableList()));
 
                 return ItemBuilder.make(Material.CHEST)
+                               .setCustomId("ac_preset_" + PresetName.KEY.id(obj.get(PresetName.KEY)))
                                .setDisplayName(GOLD + BOLD + obj.get(PresetName.KEY))
                                .setLore(lore);
             }
 
             @Override
             protected void itemAction(LGInventoryHolder holder, InventoryClickEvent event, GamePreset obj) {
-                lgConfig.current(obj);
+                event.getWhoClicked().sendMessage(GREEN + "Chargement du preset " + GOLD + BOLD + obj.get(PresetName.KEY));
+
+                lgConfig.current(obj.clone());
                 lgConfig.save();
 
                 holder.getCache().remove("pageIndex");
