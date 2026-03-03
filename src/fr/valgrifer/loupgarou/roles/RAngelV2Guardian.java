@@ -33,73 +33,79 @@ public class RAngelV2Guardian extends Role {
 
 
     private static final ItemBuilder itemNoAction = ResourcePack.getItem("ui_cancel")
-        .setCustomId("ac_no")
-        .setDisplayName(GRAY + BOLD + "Ne rien faire")
-        .setLore(DARK_GRAY + "Passez votre tour");
+                                                            .setCustomId("ac_no")
+                                                            .setDisplayName(GRAY + BOLD + "Ne rien faire")
+                                                            .setLore(DARK_GRAY + "Passez votre tour");
 
     private static final MenuPreset preset = new MenuPreset(1) {
         @Override
         protected void preset() {
-            setSlot(3, new MenuPreset.Slot(itemNoAction), ((holder, event) -> {
-                if (!(holder instanceof LGPrivateInventoryHolder)) return;
+            setSlot(
+                    3, new MenuPreset.Slot(itemNoAction), ((holder, event) -> {
+                        if (!(holder instanceof LGPrivateInventoryHolder)) return;
 
-                LGPlayer lgp = ((LGPrivateInventoryHolder) holder).getPlayer();
+                        LGPlayer lgp = ((LGPrivateInventoryHolder) holder).getPlayer();
 
-                if (!(lgp.getRole() instanceof RAngelV2Guardian)) return;
+                        if (!(lgp.getRole() instanceof RAngelV2Guardian)) return;
 
-                RAngelV2Guardian role = (RAngelV2Guardian) lgp.getRole();
+                        RAngelV2Guardian role = (RAngelV2Guardian) lgp.getRole();
 
-                role.closeInventory(lgp);
-                lgp.sendMessage(RED + "Vous ne protégez pas votre cible.");
-                lgp.hideView();
-                role.callback.run();
-            }));
-            setSlot(5, new Slot(ItemBuilder.make(Material.TOTEM_OF_UNDYING)
-                .setCustomId("ac_yes")
-                .setLore(DARK_GRAY + "Votre Cible ne pourras pas être tué par",
-                    DARK_GRAY + "les " + RED + BOLD + "Loups" + DARK_GRAY + " cette nuit.")) {
-                @Override
-                public ItemBuilder getItem(LGInventoryHolder holder) {
-                    if (!(holder instanceof LGPrivateInventoryHolder)) return MenuPreset.lockSlot.getDefaultItem();
+                        role.closeInventory(lgp);
+                        lgp.sendMessage(RED + "Vous ne protégez pas votre cible.");
+                        lgp.hideView();
+                        role.callback.run();
+                    })
+            );
+            setSlot(
+                    5, new Slot(ItemBuilder.make(Material.TOTEM_OF_UNDYING)
+                                        .setCustomId("ac_yes")
+                                        .setLore(
+                                                DARK_GRAY + "Votre Cible ne pourras pas être tué par",
+                                                DARK_GRAY + "les " + RED + BOLD + "Loups" + DARK_GRAY + " cette nuit."
+                                        )) {
+                        @Override
+                        public ItemBuilder getItem(LGInventoryHolder holder) {
+                            if (!(holder instanceof LGPrivateInventoryHolder)) return MenuPreset.lockSlot.getDefaultItem();
 
-                    LGPlayer lgp = ((LGPrivateInventoryHolder) holder).getPlayer();
+                            LGPlayer lgp = ((LGPrivateInventoryHolder) holder).getPlayer();
 
-                    return getDefaultItem().setDisplayName(
-                        DARK_GREEN + BOLD + "Protéger (" + GOLD + BOLD + lgp.getCache().<Integer> get(LifeKey) + DARK_GREEN + BOLD + " restant)");
-                }
-            }, ((holder, event) -> {
-                if (!(holder instanceof LGPrivateInventoryHolder)) return;
+                            return getDefaultItem().setDisplayName(
+                                    DARK_GREEN + BOLD + "Protéger (" + GOLD + BOLD + lgp.getCache().<Integer> get(LifeKey) + DARK_GREEN + BOLD + " restant)");
+                        }
+                    }, ((holder, event) -> {
+                        if (!(holder instanceof LGPrivateInventoryHolder)) return;
 
-                LGPlayer lgp = ((LGPrivateInventoryHolder) holder).getPlayer();
+                        LGPlayer lgp = ((LGPrivateInventoryHolder) holder).getPlayer();
 
-                if (!(lgp.getRole() instanceof RAngelV2Guardian)) return;
+                        if (!(lgp.getRole() instanceof RAngelV2Guardian)) return;
 
-                if (lgp.getCache().get(LifeKey, 0) <= 0) return;
+                        if (lgp.getCache().get(LifeKey, 0) <= 0) return;
 
-                RAngelV2Guardian role = (RAngelV2Guardian) lgp.getRole();
+                        RAngelV2Guardian role = (RAngelV2Guardian) lgp.getRole();
 
-                role.closeInventory(lgp);
-                lgp.hideView();
+                        role.closeInventory(lgp);
+                        lgp.hideView();
 
-                LGRoleActionEvent e = new LGRoleActionEvent(role.getGame(), new GuardAction(), lgp);
-                Bukkit.getPluginManager().callEvent(e);
-                GuardAction action = (GuardAction) e.getAction();
-                if (!action.isCancelled() || action.isForceMessage()) {
-                    lgp.sendActionBarMessage(BLUE + BOLD + "Tu as décidé de protéger ta cible.");
-                    lgp.sendMessage(GOLD + "Tu as décidé de protéger ta cible.");
-                }
-                else lgp.sendMessage(RED + "Tu ne peux pas protégé ta cible.");
+                        LGRoleActionEvent e = new LGRoleActionEvent(role.getGame(), new GuardAction(), lgp);
+                        Bukkit.getPluginManager().callEvent(e);
+                        GuardAction action = (GuardAction) e.getAction();
+                        if (!action.isCancelled() || action.isForceMessage()) {
+                            lgp.sendActionBarMessage(BLUE + BOLD + "Tu as décidé de protéger ta cible.");
+                            lgp.sendMessage(GOLD + "Tu as décidé de protéger ta cible.");
+                        }
+                        else lgp.sendMessage(RED + "Tu ne peux pas protégé ta cible.");
 
-                if (!action.isCancelled() || action.isForceConsume()) lgp.getCache().set(LifeKey, lgp.getCache().get(LifeKey, 0) - 1);
+                        if (!action.isCancelled() || action.isForceConsume()) lgp.getCache().set(LifeKey, lgp.getCache().get(LifeKey, 0) - 1);
 
-                if (action.isCancelled()) {
-                    role.callback.run();
-                    return;
-                }
+                        if (action.isCancelled()) {
+                            role.callback.run();
+                            return;
+                        }
 
-                ((LGPlayer) lgp.getCache().get(RAngelV2.TargetKey)).getCache().set(GuardKey, true);
-                role.callback.run();
-            }));
+                        ((LGPlayer) lgp.getCache().get(RAngelV2.TargetKey)).getCache().set(GuardKey, true);
+                        role.callback.run();
+                    })
+            );
         }
     };
     private Runnable callback;
@@ -136,9 +142,9 @@ public class RAngelV2Guardian extends Role {
 
     public static String _getDescription() {
         return WHITE + "Tu es " + RoleType.NEUTRAL.getColoredName(LIGHT_PURPLE, BOLD) + WHITE + " et tu gagnes si tu remplis ton objectif. " +
-            "Tu as une cible à protéger en " + YELLOW + BOLD + "Ange Gardien" + WHITE + ". " + "Vous aurez une vie supplémentaire contre les " +
-            RoleWinType.LOUP_GAROU.getColoredName(BOLD) + WHITE + " pour réussir votre mission. " + "En " + YELLOW + BOLD + "Ange Gardien" + WHITE +
-            ", ton objectif est de garder en vie ton protégé, pour cela tu pourras le protéger jusqu'à 2x durant la partie.";
+                       "Tu as une cible à protéger en " + YELLOW + BOLD + "Ange Gardien" + WHITE + ". " + "Tu auras une vie supplémentaire contre les " +
+                       RoleWinType.LOUP_GAROU.getColoredName(BOLD) + WHITE + " pour réussir ta mission. " + "En " + YELLOW + BOLD + "Ange Gardien" + WHITE +
+                       ", ton objectif est de garder en vie ton protégé, pour cela tu pourras le protéger jusqu'à 2x durant la partie.";
     }
 
     public static String _getTask() {
@@ -191,7 +197,7 @@ public class RAngelV2Guardian extends Role {
     @EventHandler
     public void onQuitInventory(InventoryCloseEvent e) {
         if (!(e.getInventory().getHolder() instanceof LGPrivateInventoryHolder) || !e.getInventory().getHolder().equals(invHolder) ||
-            LGPlayer.get((Player) e.getPlayer()).getRole() != this || !inMenu) return;
+                    LGPlayer.get((Player) e.getPlayer()).getRole() != this || !inMenu) return;
 
         new BukkitRunnable() {
             @Override
@@ -207,8 +213,8 @@ public class RAngelV2Guardian extends Role {
         if (e.getGame() != getGame()) return;
 
         if ((e.getReason() == LGPlayerKilledEvent.Reason.LOUP_GAROU || e.getReason() == LGPlayerKilledEvent.Reason.LOUP_BLANC ||
-            e.getReason() == LGPlayerKilledEvent.Reason.GM_LOUP_GAROU || e.getReason() == LGPlayerKilledEvent.Reason.ASSASSIN) &&
-            e.getKilled().getCache().getBoolean(GuardKey)) e.setCancelled(true);
+                     e.getReason() == LGPlayerKilledEvent.Reason.GM_LOUP_GAROU || e.getReason() == LGPlayerKilledEvent.Reason.ASSASSIN) &&
+                    e.getKilled().getCache().getBoolean(GuardKey)) e.setCancelled(true);
     }
 
     @EventHandler
@@ -220,7 +226,7 @@ public class RAngelV2Guardian extends Role {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onUpdatePrefix(LGUpdatePrefixEvent e) {
         if (e.getGame() == getGame()) if (e.getTo().getRole() instanceof RAngelV2Guardian && e.getTo().getCache().has(RAngelV2.TargetKey) &&
-            e.getTo().getCache().<LGPlayer> get(RAngelV2.TargetKey).equals(e.getPlayer())) e.setPrefix(GREEN + "⌖ " + e.getPrefix() + RESET);
+                                                  e.getTo().getCache().<LGPlayer> get(RAngelV2.TargetKey).equals(e.getPlayer())) e.setPrefix(GREEN + "⌖ " + e.getPrefix() + RESET);
     }
 
 
@@ -229,9 +235,9 @@ public class RAngelV2Guardian extends Role {
         if (e.getGame() != getGame()) return;
 
         List<LGPlayer> winners = getPlayers().stream()
-            .filter(lgPlayer -> !lgPlayer.isDead())
-            .filter(lgPlayer -> !getGame().getAlive(pl -> lgPlayer.getCache().get(RAngelV2.TargetKey) == pl).isEmpty())
-            .collect(Collectors.toCollection(ArrayList::new));
+                                         .filter(lgPlayer -> !lgPlayer.isDead())
+                                         .filter(lgPlayer -> !getGame().getAlive(pl -> lgPlayer.getCache().get(RAngelV2.TargetKey) == pl).isEmpty())
+                                         .collect(Collectors.toCollection(ArrayList::new));
 
         if (!winners.isEmpty()) new BukkitRunnable() {
             @Override
@@ -249,6 +255,7 @@ public class RAngelV2Guardian extends Role {
         private boolean cancelled;
         private boolean forceMessage;
         private boolean forceConsume;
+
         public GuardAction() { }
     }
 }

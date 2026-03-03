@@ -28,7 +28,7 @@ public abstract class PaginationMapPreset<T> extends MenuPreset {
             @Override
             public ItemBuilder getItem(LGInventoryHolder holder) {
                 int index = getPageIndex();
-                if (index == 0) return ItemBuilder.make(Material.AIR);
+                if (index == 0) return lockSlot.getDefaultItem();
                 return getDefaultItem().setDisplayName(GRAY + "Go to Page " + GOLD + index);
             }
         }, (h, event) -> setPageIndex(getPageIndex() - 1));
@@ -39,7 +39,7 @@ public abstract class PaginationMapPreset<T> extends MenuPreset {
             @Override
             public ItemBuilder getItem(LGInventoryHolder h) {
                 int index = getPageIndex();
-                if (index == getMaxPage() - 1) return ItemBuilder.make(Material.AIR);
+                if (index == getMaxPage() - 1) return lockSlot.getDefaultItem();
                 return getDefaultItem().setDisplayName(GRAY + "Go to Page " + GOLD + (index + 2));
             }
         }, (h, event) -> setPageIndex(getPageIndex() + 1));
@@ -98,11 +98,11 @@ public abstract class PaginationMapPreset<T> extends MenuPreset {
 
         getHolder().getInventory().setContents(Arrays.stream(contentBuilder).map(builder -> {
             try {
-                if (builder == null) return null;
+                if (builder == null) return new ItemStack(Material.AIR);
                 return builder.build();
             } catch (Exception e) {
                 e.printStackTrace();
-                return null;
+                return new ItemStack(Material.AIR);
             }
         }).toArray(ItemStack[]::new));
     }

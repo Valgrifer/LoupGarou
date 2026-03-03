@@ -138,8 +138,8 @@ public class RPsychopath extends Role implements Listener {
                 if (!killEvent.isCancelled()) {
                     getGame().kill(killEvent.getKilled(), killEvent.getReason(), true);
 
-                    vote.getParticipants().remove(killEvent.getKilled());
-                    vote.getVotes().remove(killEvent.getKilled());
+                    vote.removeVote(killEvent.getKilled());
+                    vote.remove(killEvent.getKilled());
                     killEvent.getKilled().getPlayer().closeInventory();
                 }
             }
@@ -165,7 +165,7 @@ public class RPsychopath extends Role implements Listener {
     }
 
     public static String _getName() {
-        return DARK_AQUA + BOLD + "Kira";
+        return DARK_AQUA + BOLD + "Psychopathe";
     }
 
     public static String _getFriendlyName() {

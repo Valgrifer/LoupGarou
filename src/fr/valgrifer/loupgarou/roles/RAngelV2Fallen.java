@@ -3,6 +3,7 @@ package fr.valgrifer.loupgarou.roles;
 import fr.valgrifer.loupgarou.MainLg;
 import fr.valgrifer.loupgarou.classes.LGGame;
 import fr.valgrifer.loupgarou.classes.LGPlayer;
+import fr.valgrifer.loupgarou.classes.LGVoteCause;
 import fr.valgrifer.loupgarou.events.LGGameEndEvent;
 import fr.valgrifer.loupgarou.events.LGUpdatePrefixEvent;
 import fr.valgrifer.loupgarou.events.LGVoteEndEvent;
@@ -51,10 +52,10 @@ public class RAngelV2Fallen extends Role {
 
     public static String _getDescription() {
         return WHITE + "Tu es " + RoleType.NEUTRAL.getColoredName(LIGHT_PURPLE, BOLD) + WHITE + " et tu gagnes si tu remplis ton objectif. " +
-            "Tu auras une cible à tuer en " + RED + BOLD + "Ange Déchu" + WHITE + ". " + "Vous aurez une vie supplémentaire contre les " +
-            RoleWinType.LOUP_GAROU.getColoredName(BOLD) + WHITE + " pour réussir votre mission. " + "En " + RED + BOLD + "Ange Déchu" + WHITE +
-            ", ton objectif est de tuer ta cible, pour cela tu devras être le premier à la voter durant le vote du " +
-            RoleType.VILLAGER.getColoredName(BOLD) + WHITE + ".";
+                       "Tu auras une cible à tuer en " + RED + BOLD + "Ange Déchu" + WHITE + ". " + "Tu auras une vie supplémentaire contre les " +
+                       RoleWinType.LOUP_GAROU.getColoredName(BOLD) + WHITE + " pour réussir ta mission. " + "En " + RED + BOLD + "Ange Déchu" + WHITE +
+                       ", ton objectif est de tuer ta cible, pour cela tu devras être le premier à la voter durant le vote du " +
+                       RoleType.VILLAGER.getColoredName(BOLD) + WHITE + ".";
     }
 
     public static String _getTask() {
@@ -65,26 +66,24 @@ public class RAngelV2Fallen extends Role {
         return "L'" + _getScoreBoardName() + BLUE + " réfléchit.";
     }
 
-    @Override
-    public int getTimeout() {
-        return 20;
-    }
-
     @EventHandler(priority = EventPriority.LOWEST)
     public void onUpdatePrefix(LGUpdatePrefixEvent e) {
         if (e.getGame() == getGame()) if (e.getTo().getRole() instanceof RAngelV2Fallen && e.getTo().getCache().has(RAngelV2.TargetKey) &&
-            e.getTo().getCache().<LGPlayer> get(RAngelV2.TargetKey).equals(e.getPlayer())) e.setPrefix(RED + "⌖ " + WHITE + e.getPrefix());
+                                                  e.getTo().getCache().<LGPlayer> get(RAngelV2.TargetKey).equals(e.getPlayer())) e.setPrefix(RED + "⌖ " + WHITE + e.getPrefix());
     }
 
     @EventHandler
     public void onVoteEnd(LGVoteEndEvent e) {
         if (e.getGame() != getGame()) return;
 
-        if (e.getVote().getChoosen() == null) return;
+        if (e.getVote().getCause() != LGVoteCause.VILLAGE || e.getVote().getChoosen() == null) return;
 
         LGPlayer firstVote = e.getVote().getVotes().get(e.getVote().getChoosen()).get(0);
 
-        if (getPlayers().contains(firstVote)) winners.add(firstVote);
+        if (getPlayers().contains(firstVote)) {
+            winners.add(firstVote);
+            firstVote.sendMessage(GOLD + "Tu as remplie ton objectif, tu peux mourir tranquille à présent.");
+        }
     }
 
     @EventHandler

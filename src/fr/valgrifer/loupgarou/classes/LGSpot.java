@@ -14,7 +14,7 @@ public class LGSpot {
     }
 
     public static int size() {
-        return Objects.requireNonNull(MainLg.getInstance().getConfig().getList("spawns")).size();
+        return Objects.requireNonNull(MainLg.getInstance().getSpots().getSpots("world")).size();
     }
 
     public void set(int index, LGPlayer player) {

@@ -7,7 +7,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <serverPath>C:/Users/Valgrifer/Desktop/servmc/lg</serverPath>
+        <serverPath>C:\Users\Valgrifer\Documents\code\server\minecraft\LG</serverPath>
     </properties>
     <build>
         <finalName>LoupGarou</finalName>
@@ -19,8 +19,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <source>8</source>
-                    <target>8</target>
+                    <source>10</source>
+                    <target>10</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -96,7 +96,7 @@
             <artifactId>spigot</artifactId>
             <version>1.16.5</version>
             <scope>system</scope>
-            <systemPath>${serverPath}/spigot-1.16.5.jar</systemPath>
+            <systemPath>${serverPath}/cache/patched_1.16.5.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.comphenix.protocol</groupId>
@@ -120,7 +120,7 @@
         <dependency>
             <groupId>net.lingala.zip4j</groupId>
             <artifactId>zip4j</artifactId>
-            <version>2.11.2</version>
+            <version>2.11.3</version>
         </dependency>
     </dependencies>
 </project>

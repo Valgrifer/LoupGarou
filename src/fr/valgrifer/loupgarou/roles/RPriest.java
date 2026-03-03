@@ -15,6 +15,7 @@ import com.comphenix.protocol.wrappers.WrappedDataWatcher.WrappedDataWatcherObje
 import com.comphenix.protocol.wrappers.WrappedWatchableObject;
 import fr.valgrifer.loupgarou.MainLg;
 import fr.valgrifer.loupgarou.classes.*;
+import fr.valgrifer.loupgarou.classes.config.key.CompoLiveUpdate;
 import fr.valgrifer.loupgarou.events.LGPreDayStartEvent;
 import fr.valgrifer.loupgarou.events.LGRoleActionEvent;
 import fr.valgrifer.loupgarou.events.MessageForced;
@@ -350,7 +351,7 @@ public class RPriest extends Role {
             VariousUtils.setWarning(lgp.getPlayer(), true);
 
 
-            if (MainLg.getInstance().getConfig().getBoolean("compo.update_on_kill", true)) getGame().updateRoleScoreboard();
+            if (this.getGame().getPreset().get(CompoLiveUpdate.KEY)) getGame().updateRoleScoreboard();
 
             getGame().broadcastMessage(GRAY + BOLD + lgp.getName() + GOLD + " a été ressuscité cette nuit.", true);
 

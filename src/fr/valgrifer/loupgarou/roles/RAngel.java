@@ -1,10 +1,10 @@
 package fr.valgrifer.loupgarou.roles;
 
-import fr.valgrifer.loupgarou.MainLg;
 import fr.valgrifer.loupgarou.classes.LGGame;
 import fr.valgrifer.loupgarou.classes.LGPlayer;
 import fr.valgrifer.loupgarou.classes.LGVoteCause;
 import fr.valgrifer.loupgarou.classes.LGWinType;
+import fr.valgrifer.loupgarou.classes.config.key.CompoLiveUpdate;
 import fr.valgrifer.loupgarou.events.*;
 import fr.valgrifer.loupgarou.events.LGPlayerKilledEvent.Reason;
 import org.bukkit.event.EventHandler;
@@ -71,7 +71,7 @@ public class RAngel extends Role {
     @EventHandler
     public void onDayEnd(LGDayEndEvent e) {
         if (e.getGame() == getGame()) {
-            if (getPlayers().size() > 0 && getGame().getNight() == night + 1 && vote) {
+            if (!getPlayers().isEmpty() && getGame().getNight() == night + 1 && vote) {
                 RVillager villageois = getGame().getRole(RVillager.class, true);
 
                 for (LGPlayer lgp : getPlayers()) {
@@ -82,7 +82,7 @@ public class RAngel extends Role {
                 }
 
                 getPlayers().clear();
-                if (MainLg.getInstance().getConfig().getBoolean("compo.update_on_kill", true)) getGame().updateRoleScoreboard();
+                if (this.getGame().getPreset().get(CompoLiveUpdate.KEY)) getGame().updateRoleScoreboard();
             }
             vote = false;
         }
@@ -97,7 +97,7 @@ public class RAngel extends Role {
 
     @EventHandler
     public void onWinCheck(LGEndCheckEvent e) {
-        if (e.getGame() == getGame()) if (winners.size() > 0) e.setWinType(LGWinType.ANGE);
+        if (e.getGame() == getGame()) if (!winners.isEmpty()) e.setWinType(LGWinType.ANGE);
     }
 
     @EventHandler

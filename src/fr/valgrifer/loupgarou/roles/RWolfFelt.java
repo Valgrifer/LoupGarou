@@ -2,7 +2,8 @@ package fr.valgrifer.loupgarou.roles;
 
 import fr.valgrifer.loupgarou.classes.LGGame;
 import fr.valgrifer.loupgarou.classes.LGPlayer;
-import fr.valgrifer.loupgarou.events.*;
+import fr.valgrifer.loupgarou.events.LGDayEndEvent;
+import fr.valgrifer.loupgarou.events.LGRoleActionEvent;
 import org.bukkit.event.EventHandler;
 
 import java.security.SecureRandom;

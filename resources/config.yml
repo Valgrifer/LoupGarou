@@ -3,6 +3,3 @@ resourcepack:
   useResourcePackHosting: false
   generateResourcePack: false
   path: ./resourcepack/loup_garou.zip
-compo:
-  hidden: false
-  update_on_kill: true

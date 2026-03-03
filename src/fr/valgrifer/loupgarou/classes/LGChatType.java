@@ -14,7 +14,7 @@ public class LGChatType {
     public static final LGChatType NOCHAT = new LGChatType("NoChat");
     public static final LGChatType LOUP_GAROU = new LGChatType("Loup Garou");
     public static final LGChatType LITTLE_GIRL = new LGChatType("Petite Fille");
-    public static final LGChatType LELOUCH = new LGChatType("Lelouch");
+    public static final LGChatType PUPPETEER = new LGChatType("Marionnettiste");
     public static final LGChatType LOVE = new LGChatType("LOVE");
     public static final LGChatType TWIN_GIRLS = new LGChatType("Jumelles");
     public static final LGChatType MEDIUM = new LGChatType("Médium");

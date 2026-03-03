@@ -2,6 +2,16 @@ package fr.valgrifer.loupgarou;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import fr.valgrifer.loupgarou.classes.*;
+import fr.valgrifer.loupgarou.classes.config.ConfigValue;
+import fr.valgrifer.loupgarou.classes.config.GamePreset;
+import fr.valgrifer.loupgarou.classes.config.LgConfig;
+import fr.valgrifer.loupgarou.classes.config.WorldSpawnSpots;
+import fr.valgrifer.loupgarou.classes.config.inventory.ConfigManager;
+import fr.valgrifer.loupgarou.classes.config.inventory.LGRolePreset;
+import fr.valgrifer.loupgarou.classes.config.key.CompoHidden;
+import fr.valgrifer.loupgarou.classes.config.key.CompoLiveUpdate;
+import fr.valgrifer.loupgarou.classes.config.key.Composition;
+import fr.valgrifer.loupgarou.classes.config.key.PresetName;
 import fr.valgrifer.loupgarou.inventory.ItemBuilder;
 import fr.valgrifer.loupgarou.inventory.LGInventoryHolder;
 import fr.valgrifer.loupgarou.listeners.*;
@@ -15,50 +25,61 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.io.File;
 import java.io.InputStream;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static fr.valgrifer.loupgarou.utils.ChatColorQuick.*;
 
 public class MainLg extends JavaPlugin {
+    static {
+        ConfigurationSerialization.registerClass(WorldSpawnSpots.Spot.class);
+        ConfigurationSerialization.registerClass(GamePreset.class);
+
+        ConfigValue.register(PresetName.KEY);
+        ConfigValue.register(Composition.KEY);
+        ConfigValue.register(CompoHidden.KEY);
+        ConfigValue.register(CompoLiveUpdate.KEY);
+    }
+
     @Getter
     private static MainLg instance;
-    @Getter
-    private static int maxPlayers = 0;
     private final List<Class<? extends Role>> blacklistRoleSpec = new ArrayList<>();
     @Getter
     private List<Class<? extends Role>> roles = new ArrayList<>();
     @Getter
     private List<Class<? extends Role>> notSelectableRoles = new ArrayList<>();
     @Getter
+    private LgConfig lgConfig;
+    @Getter
     @Setter
     private LGGame currentGame;//Because for now, only one game will be playable on one server (flemme)
+    @Getter
+    private WorldSpawnSpots spots;
+
+    public MainLg() {
+        instance = this;
+    }
 
     public static void makeNewGame() {
-        LGGame game = new LGGame(MainLg.getMaxPlayers());
+        LGGame game = new LGGame(MainLg.getInstance().getLgConfig().current().clone());
         MainLg.getInstance().setCurrentGame(game);
     }
 
     @Override
     public void onLoad() {
-        instance = this;
         loadRoles();
-        if (!new File(getDataFolder(), "config.yml").exists()) {//Créer la config
-            saveDefaultConfig();
-            FileConfiguration config = getConfig();
-            config.set("spawns", new ArrayList<>());
-            for (Class<? extends Role> role : roles)//Nombre de participants pour chaque rôle
-                config.set("role." + Role.getId(role), 0);
-            saveConfig();
-        }
+        saveDefaultConfig();
+
+        lgConfig = new LgConfig(this);
 
         registerResources();
     }
@@ -69,12 +90,12 @@ public class MainLg extends JavaPlugin {
         roles = Collections.unmodifiableList(roles);
         notSelectableRoles = Collections.unmodifiableList(notSelectableRoles);
 
-        loadMaxPlayers();
+        spots = new WorldSpawnSpots(getServer().getWorlds().get(0));
 
         LGCardItems.registerResources(this);
 
-        if (getConfig().getBoolean("resourcepack.generateResourcePack", false))
-            ResourcePack.generate(this, getConfig().getString("resourcepack.path", "./resourcepack/loup_garou.zip"));
+        if (getLgConfig().resourcepack().generateResourcePack())
+            ResourcePack.generate(this, getLgConfig().resourcepack().path());
 
         getLogger().info("ResourcePack Url Used: " + VariousUtils.resourcePackAddress(this));
 
@@ -115,13 +136,14 @@ public class MainLg extends JavaPlugin {
                 sender.sendMessage("Erreur: Vous n'êtes pas un joueur");
                 return true;
             }
+
             if (args.length >= 1 && args[0].equalsIgnoreCase("center")) {
                 Player player = (Player) sender;
                 this.centerLocation = player.getLocation();
                 sender.sendMessage(GREEN + "Le centre a bien été pris en compte !");
                 return true;
             }
-            if (args.length >= 1 && args[0].equalsIgnoreCase("addspawn")) {
+            else if (args.length >= 1 && args[0].equalsIgnoreCase("addspawn")) {
                 if (this.centerLocation == null) {
                     sender.sendMessage(RED + "Le centre n'a pas étais définie !");
                     return true;
@@ -130,19 +152,41 @@ public class MainLg extends JavaPlugin {
                 Player player = (Player) sender;
                 Location loc = player.getLocation();
 
-                List<Object> list = (List<Object>) getConfig().getList("spawns", new ArrayList<>());
-                list.add(
-                    Arrays.asList((double) loc.getBlockX(), loc.getY(), (double) loc.getBlockZ(), VariousUtils.getAngle(this.centerLocation, loc), 15D));
-                getConfig().set("spawns", list);
-                saveConfig();
+                this.spots.addSpots("world", new WorldSpawnSpots.Spot(loc.getBlockX() + 0.5D, loc.getY(), loc.getBlockZ() + 0.5D, VariousUtils.getAngle(this.centerLocation, loc), 15));
+                this.spots.save();
 
                 sender.sendMessage(GREEN + "La position a bien été ajoutée !");
                 return true;
             }
-            if (args.length >= 1 && args[0].equalsIgnoreCase("debug")) {
+            else if (args.length >= 1 && args[0].equalsIgnoreCase("save")) {
+                if (args.length == 1) {
+                    sender.sendMessage(DARK_RED + "Erreur: " + RED + "Vous devez donné un nom au preset");
+                    return true;
+                }
+
+                String name = Stream.of(args).skip(1).collect(Collectors.joining(" "));
+                name = name.substring(0, Math.min(name.length(), 16));
+                String key = name.toLowerCase().replace(" ", "_");
+
+                GamePreset current = getLgConfig().current().clone();
+                GamePreset newPreset = getLgConfig().preset(key);
+                ConfigValue.getValues()
+                        .stream()
+                        .filter(current::has)
+                        .map(cv -> (ConfigValue<?, Object>) cv)
+                        .forEach(cv -> newPreset.set(cv, current.get(cv)));
+
+                newPreset.set(PresetName.KEY, name);
+                getLgConfig().save();
+
+                sender.sendMessage(GREEN + "Preset " + GOLD + name + GREEN + " !");
+                return true;
+            }
+            else if (args.length >= 1 && args[0].equalsIgnoreCase("debug")) {
                 ((Player) sender).openInventory(DebugCard.getMainDebugCard().getInventory());
                 return true;
             }
+
             ((Player) sender).openInventory(ConfigManager.getMainConfigManager().getInventory());
             return true;
         }
@@ -186,7 +230,7 @@ public class MainLg extends JavaPlugin {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (command.getName().equalsIgnoreCase("lg") && sender.hasPermission("loupgarou.admin") && args.length == 1)
-            return getStartingList(args[0], "addSpawn", "center");
+            return getStartingList(args[0], "addSpawn", "center", "save");
         return new ArrayList<>(0);
     }
 
@@ -197,13 +241,6 @@ public class MainLg extends JavaPlugin {
         for (String s : list)
             if (s.toLowerCase().startsWith(startsWith)) returnlist.add(s);
         return returnlist;
-    }
-
-    public void loadMaxPlayers() {
-        int players = 0;
-        for (Class<? extends Role> role : roles)
-            players += getConfig().getInt("role." + Role.getId(role));
-        maxPlayers = players;
     }
 
     public void addRole(Class<? extends Role> clazz, InputStream image) {
@@ -221,7 +258,7 @@ public class MainLg extends JavaPlugin {
         if (!this.blacklistRoleSpec.contains(clazz)) this.blacklistRoleSpec.add(clazz);
     }
 
-    @SuppressWarnings("SpellCheckingInspection")
+    @SuppressWarnings("CallToPrintStackTrace")
     private void loadRoles() {
         try {
             addRole(RWereWolf.class, getResource("roles/werewolf.png"));
@@ -233,7 +270,7 @@ public class MainLg extends JavaPlugin {
             addRole(RWolfClairvoyant.class, getResource("roles/werewolfclairvoyant.png"));
             addRole(RHunter.class, getResource("roles/hunter.png"));
             addRole(RVillager.class, getResource("roles/villager.png"));
-            addRole(RVillagerVillager.class, getResource("roles/villager.png"));
+            addRole(RVillagerVillager.class, getResource("roles/farmer.png"));
 //            addRole(RMedium.class, getResource("roles/medium.png"));
             addRole(RDictator.class, getResource("roles/dictator.png"));
             addRole(RCupid.class, getResource("roles/cupid.png"));
@@ -262,10 +299,10 @@ public class MainLg extends JavaPlugin {
             addRole(RBearShowman.class, getResource("roles/bearshowman.png"));
             addRole(RVampire.class, getResource("roles/vampire.png"));
             addRole(RVampireHunter.class, getResource("roles/vampirehunter.png"));
-            addRole(RPsychopath.class, getResource("roles/kira.png"));
+            addRole(RPsychopath.class, getResource("roles/psychopath.png"));
             addRole(RWolfFelt.class, getResource("roles/feltwerewolf.png"));
             addRole(RFox.class, getResource("roles/fox.png"));
-            addRole(RPuppeteer.class, getResource("roles/lelouch.png"));
+            addRole(RPuppeteer.class, getResource("roles/puppeteer.png"));
             addRole(RTwinGirls.class, getResource("roles/twingirls.png"));
 
             addBlackListSpecRole(RMedium.class);

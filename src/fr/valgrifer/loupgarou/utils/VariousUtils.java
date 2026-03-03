@@ -5,10 +5,11 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import fr.valgrifer.loupgarou.MainLg;
+import fr.valgrifer.loupgarou.classes.config.LgConfig;
 import org.bukkit.Location;
 import org.bukkit.WorldBorder;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -18,6 +19,10 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 public class VariousUtils {
     private static final char[] hex = "0123456789abcdef".toCharArray();
@@ -29,20 +34,20 @@ public class VariousUtils {
 
     public static String resourcePackAddress(MainLg main) {
         if (resourcePackAddress == null) {
-            FileConfiguration config = main.getConfig();
-            if (config.getBoolean("resourcepack.useResourcePackHosting", false) &&
-                main.getServer().getPluginManager().isPluginEnabled("ResourcePackHosting")) {
+            LgConfig.Resourcepack config = MainLg.getInstance().getLgConfig().resourcepack();
+            if (config.useResourcePackHosting() &&
+                        main.getServer().getPluginManager().isPluginEnabled("ResourcePackHosting")) {
                 try {
                     Class<?> ResourcePackHosting = Class.forName("fr.valgrifer.resourcepackhosting.ResourcePackHosting");
-                    Method getAdresse = ResourcePackHosting.getDeclaredMethod("getAdresse");
+                    Method   getAdresse          = ResourcePackHosting.getDeclaredMethod("getAdresse");
                     resourcePackAddress = (String) getAdresse.invoke(null);
 
-                    if (config.getBoolean("resourcepack.generateResourcePack", false)) resourcePackAddress += RandomString.generate(10);
+                    if (config.generateResourcePack()) resourcePackAddress += RandomString.generate(10);
                 } catch (ClassNotFoundException | InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
                     throw new RuntimeException(e);
                 }
             }
-            else resourcePackAddress = config.getString("resourcepack.url", "http://leomelki.fr/mcgames/ressourcepacks/v32/loup_garou.zip");
+            else resourcePackAddress = config.url();
         }
 
         return resourcePackAddress;
@@ -54,7 +59,7 @@ public class VariousUtils {
 
     public static void setWarning(Player p, boolean warning) {
         PacketContainer container = new PacketContainer(PacketType.Play.Server.WORLD_BORDER);
-        WorldBorder wb = p.getWorld().getWorldBorder();
+        WorldBorder     wb        = p.getWorld().getWorldBorder();
 
         container.getWorldBorderActions().write(0, EnumWrappers.WorldBorderAction.INITIALIZE);
 
@@ -98,8 +103,8 @@ public class VariousUtils {
         StringBuilder result = new StringBuilder();
 
         try {
-            int BUFFER_SIZE = 1024;
-            byte[] buffer = new byte[BUFFER_SIZE];
+            int    BUFFER_SIZE = 1024;
+            byte[] buffer      = new byte[BUFFER_SIZE];
             while (inputStream.read(buffer) != -1) {
                 for (byte b : buffer) {
                     if (b == 0) continue;
@@ -129,8 +134,8 @@ public class VariousUtils {
     }
 
     public static float getAngle(Location from, Location to) {
-        double deltaZ = from.getBlockZ() - to.getBlockZ();
-        double deltaX = from.getBlockX() - to.getBlockX();
+        double deltaZ      = from.getBlockZ() - to.getBlockZ();
+        double deltaX      = from.getBlockX() - to.getBlockX();
         double angleRadian = Math.atan2(deltaZ, deltaX);
         double angleDegres = Math.toDegrees(angleRadian) - 90;
 
@@ -138,5 +143,24 @@ public class VariousUtils {
             angleDegres += 360;
 
         return (float) angleDegres;
+    }
+
+    public static <T extends Map.Entry<K, U>, K, U, M extends Map<K, U>> Collector<T, ?, M> toMap(Supplier<M> mapFactory) {
+        return Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> y, mapFactory);
+    }
+
+    public static boolean isPrimitive(@NotNull Class<?> clazz) {
+        if (clazz.isPrimitive())
+            return true;
+
+        return String.class.equals(clazz) ||
+                       Boolean.class.equals(clazz) ||
+                       Character.class.equals(clazz) ||
+                       Byte.class.equals(clazz) ||
+                       Short.class.equals(clazz) ||
+                       Integer.class.equals(clazz) ||
+                       Long.class.equals(clazz) ||
+                       Float.class.equals(clazz) ||
+                       Double.class.equals(clazz);
     }
 }

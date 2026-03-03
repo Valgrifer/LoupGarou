@@ -4,12 +4,13 @@ import fr.valgrifer.loupgarou.MainLg;
 import fr.valgrifer.loupgarou.classes.LGCardItems;
 import fr.valgrifer.loupgarou.classes.LGGame;
 import fr.valgrifer.loupgarou.classes.LGPlayer;
+import fr.valgrifer.loupgarou.classes.config.LgComposition;
+import fr.valgrifer.loupgarou.classes.config.key.Composition;
 import fr.valgrifer.loupgarou.inventory.ItemBuilder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -38,9 +39,8 @@ public abstract class Role implements Listener {
     public Role(LGGame game) {
         this.game = game;
         Bukkit.getPluginManager().registerEvents(this, MainLg.getInstance());
-        FileConfiguration config = MainLg.getInstance().getConfig();
-        String roleConfigName = "role." + getId();
-        if (config.contains(roleConfigName)) waitedPlayers = config.getInt(roleConfigName);
+        LgComposition compo = game.getPreset().get(Composition.KEY);
+        if (compo.contains(this.getClass())) waitedPlayers = compo.get(this.getClass());
     }
 
     public static void setCard(Class<? extends Role> role, ItemBuilder card) {

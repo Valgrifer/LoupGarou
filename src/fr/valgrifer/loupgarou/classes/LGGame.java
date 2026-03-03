@@ -10,6 +10,11 @@ import fr.valgrifer.loupgarou.MainLg;
 import fr.valgrifer.loupgarou.classes.LGCardItems.Constraint;
 import fr.valgrifer.loupgarou.classes.chat.LGChat;
 import fr.valgrifer.loupgarou.classes.chat.LGNoChat;
+import fr.valgrifer.loupgarou.classes.config.GamePreset;
+import fr.valgrifer.loupgarou.classes.config.WorldSpawnSpots;
+import fr.valgrifer.loupgarou.classes.config.key.CompoHidden;
+import fr.valgrifer.loupgarou.classes.config.key.CompoLiveUpdate;
+import fr.valgrifer.loupgarou.classes.config.key.Composition;
 import fr.valgrifer.loupgarou.events.*;
 import fr.valgrifer.loupgarou.events.LGPlayerKilledEvent.Reason;
 import fr.valgrifer.loupgarou.roles.Role;
@@ -22,7 +27,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -34,6 +38,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import java.security.SecureRandom;
@@ -49,9 +54,10 @@ import static fr.valgrifer.loupgarou.utils.ChatColorQuick.*;
 public class LGGame implements Listener {
     private static final boolean autoStart = false;
 
-
     @Getter
     private final SecureRandom random = new SecureRandom();
+    @Getter
+    private final GamePreset preset;
     @Getter
     private final int maxPlayers;
     @Getter
@@ -96,8 +102,9 @@ public class LGGame implements Listener {
         }
     };
 
-    public LGGame(int maxPlayers) {
-        this.maxPlayers = maxPlayers;
+    public LGGame(@NotNull GamePreset preset) {
+        this.preset = preset;
+        this.maxPlayers = preset.get(Composition.KEY).size();
         Bukkit.getPluginManager().registerEvents(this, MainLg.getInstance());
 
         LGChat dayChat = new LGChat(this, LGChatType.VILLAGE) {
@@ -336,17 +343,17 @@ public class LGGame implements Listener {
         MainLg main = MainLg.getInstance();
 
         //Registering roles
-        List<?> original = MainLg.getInstance().getConfig().getList("spawns");
+        List<WorldSpawnSpots.Spot> original = main.getSpots().getSpots("world");
         assert original != null;
         List<Object> list = new ArrayList<>(original);
         Collections.shuffle(list);
         for (LGPlayer lgp : getInGame()) {
-            List<Double> location = (List<Double>) list.remove(0);
+            WorldSpawnSpots.Spot location = (WorldSpawnSpots.Spot) list.remove(0);
             Player       p        = lgp.getPlayer();
             p.setWalkSpeed(0);
             p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 99999, 180, false, false));
             spots.set(original.indexOf(location), lgp);
-            p.teleport(new Location(p.getWorld(), location.get(0) + 0.5, location.get(1), location.get(2) + 0.5, location.get(3).floatValue(), location.get(4).floatValue()));
+            p.teleport(main.getSpots().toLocation(location));
             WrapperPlayServerUpdateHealth update = new WrapperPlayServerUpdateHealth();
             update.setFood(6);
             update.setFoodSaturation(1);
@@ -357,7 +364,7 @@ public class LGGame implements Listener {
 
         try {
             for (Class<? extends Role> role : main.getRoles())
-                if (main.getConfig().getInt("role." + Role.getId(role)) > 0) roles.add(Role.makeNew(role, this));
+                if (this.getPreset().get(Composition.KEY).size() > 0) roles.add(Role.makeNew(role, this));
         } catch (Exception err) {
             Bukkit.broadcastMessage(DARK_RED + BOLD + "Une erreur est survenue lors de la création des roles... Regardez la console !");
             err.printStackTrace();
@@ -431,7 +438,7 @@ public class LGGame implements Listener {
     }
 
     public void updateRoleScoreboard() {
-        if (MainLg.getInstance().getConfig().getBoolean("compo.hidden", false)) {
+        if (this.getPreset().get(CompoHidden.KEY)) {
             for (LGPlayer lgp : getInGame())
                 lgp.getScoreboard().getLine(0).setDisplayName(GOLD + "Composition Caché");
             return;
@@ -607,7 +614,10 @@ public class LGGame implements Listener {
                 }
                 else lgp.getPlayer().hidePlayer(MainLg.getInstance(), killed.getPlayer());
 
-            if (vote != null) vote.remove(killed);
+            if (vote != null) {
+                vote.removeVote(killed);
+                vote.remove(killed);
+            }
 
             //Lightning effect
             killed.getPlayer().getWorld().strikeLightningEffect(killed.getPlayer().getLocation());
@@ -642,7 +652,7 @@ public class LGGame implements Listener {
         }
 
         //Update scoreboard
-        if (MainLg.getInstance().getConfig().getBoolean("compo.update_on_kill", true)) updateRoleScoreboard();
+        if (this.getPreset().get(CompoLiveUpdate.KEY)) updateRoleScoreboard();
 
         return checkEndGame(endGame);
     }

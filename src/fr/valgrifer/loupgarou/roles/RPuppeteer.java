@@ -62,7 +62,7 @@ public class RPuppeteer extends Role implements Listener {
     public RPuppeteer(LGGame game) {
         super(game);
 
-        this.chat = new LGChat(game, LGChatType.LELOUCH) {
+        this.chat = new LGChat(game, LGChatType.PUPPETEER) {
             @Override
             public String receive(@Nonnull InterlocutorContext context, @Nonnull String message) {
                 return context.getChat().receive(context, message);
@@ -214,7 +214,7 @@ public class RPuppeteer extends Role implements Listener {
     }
 
     public static String _getName() {
-        return DARK_BLUE + BOLD + "Lelouch";
+        return DARK_BLUE + BOLD + "Marionnettiste";
     }
 
     public static String _getFriendlyName() {
@@ -350,7 +350,7 @@ public class RPuppeteer extends Role implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onLGVoteEnd(LGVoteEndEvent event) {
-        if (event.getGame() != getGame()) return;
+        if (event.getGame() != getGame() || event.getVote() != vote) return;
 
         vote = null;
 

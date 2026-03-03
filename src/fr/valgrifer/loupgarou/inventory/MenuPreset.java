@@ -143,13 +143,13 @@ public class MenuPreset {
 
         holder.getInventory().setContents(Arrays.stream(content).map(slot -> {
             try {
-                if (slot == null) return null;
+                if (slot == null) return new ItemStack(Material.AIR);
                 ItemBuilder item;
-                if ((item = slot.getItem(holder)) == null) return null;
+                if ((item = slot.getItem(holder)) == null) return new ItemStack(Material.AIR);
                 return item.build();
             } catch (Exception e) {
                 e.printStackTrace();
-                return null;
+                return new ItemStack(Material.AIR);
             }
         }).toArray(ItemStack[]::new));
     }

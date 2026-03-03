@@ -1,16 +1,14 @@
-package fr.valgrifer.loupgarou.classes;
+package fr.valgrifer.loupgarou.classes.config.inventory;
 
 import fr.valgrifer.loupgarou.MainLg;
 import fr.valgrifer.loupgarou.inventory.ItemBuilder;
 import fr.valgrifer.loupgarou.inventory.LGInventoryHolder;
 import fr.valgrifer.loupgarou.inventory.MenuPreset;
 import fr.valgrifer.loupgarou.inventory.PaginationMapPreset;
-import fr.valgrifer.loupgarou.listeners.JoinListener;
 import fr.valgrifer.loupgarou.roles.Role;
 import fr.valgrifer.loupgarou.roles.RoleType;
 import fr.valgrifer.loupgarou.roles.RoleWinType;
 import lombok.AllArgsConstructor;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
@@ -48,7 +46,7 @@ public class LGRolePreset extends PaginationMapPreset<Class<? extends Role>> {
     protected void itemAction(LGInventoryHolder holder, InventoryClickEvent event, Class<? extends Role> clazz) { }
 
     private int selectedFilter = 0;
-    private final List<CompoFilter> filters = Arrays.asList(
+    private static final List<CompoFilter> filters = Arrays.asList(
             new CompoFilter("Tous", null),
             new CompoFilter("Village", r -> Role.getType(r) == RoleType.VILLAGER),
             new CompoFilter("Loup", r -> Role.getType(r) == RoleType.LOUP_GAROU),

@@ -2,7 +2,6 @@ package fr.valgrifer.loupgarou.classes.chat;
 
 import fr.valgrifer.loupgarou.classes.LGChatType;
 import fr.valgrifer.loupgarou.classes.LGGame;
-import lombok.Getter;
 
 import javax.annotation.Nonnull;
 
